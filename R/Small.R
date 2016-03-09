@@ -117,6 +117,7 @@ fetch.mee <- function(meth,exp,sample,probeInfo,geneInfo,probes=NULL,
       newenv <- new.env()
       load(sample, envir=newenv)
       sample <- get(ls(newenv)[1],envir=newenv) # The data is in the one and only variable
+      sample$ID <- as.character(sample$ID)
     }
   }else if(TCGA){
     if(!is.null(meth) & is.null(exp)){
@@ -193,8 +194,14 @@ fetch.mee <- function(meth,exp,sample,probeInfo,geneInfo,probes=NULL,
     geneInfo <- geneInfo[as.character(geneInfo$GENEID) %in% rownames(exp)]
   } 
   if(!is.null(meth) & !is.null(exp)){
-    meth <- meth[,sample$meth.ID]
-    exp <- exp[,sample$exp.ID]
+      if(TCGA){
+          meth <- meth[,sample$meth.ID]
+          exp <- exp[,sample$exp.ID]
+      }else{
+          meth <- meth[,sample$ID]
+          exp <- exp[,sample$ID]
+      }
+    
   }
   mee <- mee.data(meth=meth,exp=exp,sample=sample,
                   probeInfo=probeInfo,geneInfo=geneInfo)
@@ -284,7 +291,7 @@ getSymbol <- function(mee,geneID){
 }
 
 #'getGeneID
-#'@importFrom S4Vectors values
+#'@import S4Vectors
 #'@param mee A MEE.data or Pair object.
 #'@param symbol A character which is the geneID
 #'@return The gene ID
@@ -363,8 +370,7 @@ lm_eqn = function(df,Dep,Exp){
 #' txs <- txs(TSS=list(upstream=1000, downstream=1000))
 #' }
 #' @export
-#' @importFrom GenomicRanges unlist
-#' @import GenomeInfoDb
+#' @import BiocGenerics GenomeInfoDb GenomicRanges
 txs <- function(TSS=list(upstream=NULL, downstream=NULL)){
   gene <- transcripts(Homo.sapiens, columns=c('TXNAME','GENEID','SYMBOL'))
   gene$GENEID <- unlist(gene$GENEID)
