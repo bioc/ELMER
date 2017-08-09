@@ -14,11 +14,11 @@ scatter.plot(data = mae,
              byPair = list(probe = c("cg19403323"), gene = c("ENSG00000143469")), 
              category = "definition", save = TRUE, lm_line = TRUE) 
 
-## ----eval=TRUE, warning=FALSE, fig.cap="Each scatter plot shows the average  methylation level of sites with the TP53 motif in all LUSC samples plotted against the expression of the transcription factor TP53, TP63, TP73 respectively."----
+## ----eval=TRUE, warning=FALSE, fig.cap="Each scatter plot shows the average  methylation level of sites with the first enriched motif in all LUSC samples plotted against the expression of the transcription factor TP53, SOX2 respectively."----
 load("result/getMotif.hypo.enriched.motifs.rda")
 names(enriched.motif)[1]
 scatter.plot(data = mae,
-             byTF = list(TF = c("SXO3","SOX2"),
+             byTF = list(TF = c("TP53","SOX2"),
                          probe = enriched.motif[[names(enriched.motif)[1]]]), 
              category = "definition",
              save = TRUE, 

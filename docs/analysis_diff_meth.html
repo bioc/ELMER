@@ -11,7 +11,7 @@
 
 <meta name="author" content="Lijing Yao, Tiago Chedraoui Silva [ctb], Simon Coetzee [ctb], Ben Berman [aut], Peggy Farnham [aut], Hui Shen [ctb], Peter Laird [ctb]" />
 
-<meta name="date" content="2017-07-21" />
+<meta name="date" content="2017-07-29" />
 
 <title>ELMER: An R/Bioconductor Tool Inferring Regulatory Element Landscapes and Transcription Factor Networks Using Methylomes</title>
 
@@ -485,7 +485,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">ELMER: An R/Bioconductor Tool Inferring Regulatory Element Landscapes and Transcription Factor Networks Using Methylomes</h1>
 <h4 class="author"><em>Lijing Yao, Tiago Chedraoui Silva [ctb], Simon Coetzee [ctb], Ben Berman [aut], Peggy Farnham [aut], Hui Shen [ctb], Peter Laird [ctb]</em></h4>
-<h4 class="date"><em>2017-07-21</em></h4>
+<h4 class="date"><em>2017-07-29</em></h4>
 
 </div>
 
@@ -562,8 +562,8 @@ sig.diff &lt;-<span class="st"> </span><span class="kw">get.diff.meth</span>(<sp
                           <span class="dt">dir.out =</span><span class="st">&quot;result&quot;</span>, 
                           <span class="dt">pvalue =</span> <span class="fl">0.01</span>)</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(sig.diff)  <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">datatable</span>(<span class="dt">options =</span> <span class="kw">list</span>(<span class="dt">scrollX =</span> <span class="ot">TRUE</span>))</code></pre></div>
-<div id="htmlwidget-603821b31b980fa2fbc5" style="width:100%;height:auto;" class="datatables html-widget"></div>
-<script type="application/json" data-for="htmlwidget-603821b31b980fa2fbc5">{"x":{"filter":"none","data":[["cg00045114","cg00050294","cg00093522","cg00163018","cg00173804","cg00223046"],["cg00045114","cg00050294","cg00093522","cg00163018","cg00173804","cg00223046"],[7.30747824620915e-13,4.44032909000487e-09,1.14333847811119e-23,2.24002634648288e-21,2.76723223989916e-18,8.1427509286633e-11],[-0.349958820513855,-0.500091950051275,-0.359694418552517,-0.383819468877179,-0.374455651222461,-0.331377277973951],[2.35543419359034e-12,1.04054263589051e-08,9.61229411236779e-23,1.49121753923003e-20,1.40602983902664e-17,2.26635269021328e-10]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>probe<\/th>\n      <th>pvalue<\/th>\n      <th>Primary.solid.Tumor_Minus_Solid.Tissue.Normal<\/th>\n      <th>adjust.p<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"scrollX":true,"columnDefs":[{"className":"dt-right","targets":[2,3,4]},{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false},"selection":{"mode":"multiple","selected":null,"target":"row"}},"evals":[],"jsHooks":[]}</script>
+<div id="htmlwidget-dc703e12195084a968e9" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-dc703e12195084a968e9">{"x":{"filter":"none","data":[["cg00045114","cg00050294","cg00093522","cg00163018","cg00173804","cg00223046"],["cg00045114","cg00050294","cg00093522","cg00163018","cg00173804","cg00223046"],[7.30747824620915e-13,4.44032909000487e-09,1.14333847811119e-23,2.24002634648288e-21,2.76723223989916e-18,8.1427509286633e-11],[-0.349958820513855,-0.500091950051275,-0.359694418552517,-0.383819468877179,-0.374455651222461,-0.331377277973951],[2.35543419359034e-12,1.04054263589051e-08,9.61229411236779e-23,1.49121753923003e-20,1.40602983902664e-17,2.26635269021328e-10]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>probe<\/th>\n      <th>pvalue<\/th>\n      <th>Primary.solid.Tumor_Minus_Solid.Tissue.Normal<\/th>\n      <th>adjust.p<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"scrollX":true,"columnDefs":[{"className":"dt-right","targets":[2,3,4]},{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false},"selection":{"mode":"multiple","selected":null,"target":"row"}},"evals":[],"jsHooks":[]}</script>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># get.diff.meth automatically save output files. </span>
 <span class="co"># getMethdiff.hypo.probes.csv contains statistics for all the probes.</span>
 <span class="co"># getMethdiff.hypo.probes.significant.csv contains only the significant probes which</span>

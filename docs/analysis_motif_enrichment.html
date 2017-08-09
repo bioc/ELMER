@@ -11,7 +11,7 @@
 
 <meta name="author" content="Lijing Yao, Tiago Chedraoui Silva [ctb], Simon Coetzee [ctb], Ben Berman [aut], Peggy Farnham [aut], Hui Shen [ctb], Peter Laird [ctb]" />
 
-<meta name="date" content="2017-07-21" />
+<meta name="date" content="2017-07-29" />
 
 <title>ELMER: An R/Bioconductor Tool Inferring Regulatory Element Landscapes and Transcription Factor Networks Using Methylomes</title>
 
@@ -480,7 +480,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">ELMER: An R/Bioconductor Tool Inferring Regulatory Element Landscapes and Transcription Factor Networks Using Methylomes</h1>
 <h4 class="author"><em>Lijing Yao, Tiago Chedraoui Silva [ctb], Simon Coetzee [ctb], Ben Berman [aut], Peggy Farnham [aut], Hui Shen [ctb], Peter Laird [ctb]</em></h4>
-<h4 class="date"><em>2017-07-21</em></h4>
+<h4 class="date"><em>2017-07-29</em></h4>
 
 </div>
 
@@ -534,20 +534,13 @@ mae &lt;-<span class="st"> </span><span class="kw">get</span>(<span class="kw">l
 sig.diff &lt;-<span class="st"> </span><span class="kw">read.csv</span>(<span class="st">&quot;result/getMethdiff.hypo.probes.significant.csv&quot;</span>)
 pair &lt;-<span class="st"> </span><span class="kw">read.csv</span>(<span class="st">&quot;result/getPair.hypo.pairs.significant.csv&quot;</span>)
 <span class="kw">head</span>(pair) <span class="co"># significantly hypomethylated probes with putative target genes</span></code></pre></div>
-<pre><code>##        Probe          GeneID Symbol Distance Sides        Raw.p
-## 1 cg20701183 ENSG00000143013   LMO4        0    R1 7.453984e-14
-## 2 cg19403323 ENSG00000143469  SYT14    87476    R2 1.671937e-12
-## 3 cg12213388 ENSG00000143674   MLK4   984182    L3 2.527644e-12
-## 4 cg26607897 ENSG00000143199 ADCY10   267784    R4 4.593610e-12
-## 5 cg10574861 ENSG00000143013   LMO4        0    R1 4.770162e-12
-## 6 cg26607897 ENSG00000143147 GPR161   543156    R7 8.048248e-12
-##            Pe
-## 1 0.005434783
-## 2 0.005434783
-## 3 0.005434783
-## 4 0.005434783
-## 5 0.005434783
-## 6 0.005434783</code></pre>
+<pre><code>##        Probe          GeneID Symbol Distance Sides        Raw.p         Pe
+## 1 cg20701183 ENSG00000143013   LMO4        0    R1 7.453984e-14 0.00990099
+## 2 cg19403323 ENSG00000143469  SYT14    87476    R2 1.671937e-12 0.00990099
+## 3 cg12213388 ENSG00000143674   MLK4   984182    L3 2.527644e-12 0.00990099
+## 4 cg26607897 ENSG00000143199 ADCY10   267784    R4 4.593610e-12 0.00990099
+## 5 cg10574861 ENSG00000143013   LMO4        0    R1 4.770162e-12 0.00990099
+## 6 cg26607897 ENSG00000143147 GPR161   543156    R7 8.048248e-12 0.00990099</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Identify enriched motif for significantly hypomethylated probes which </span>
 <span class="co"># have putative target genes.</span>
 enriched.motif &lt;-<span class="st"> </span><span class="kw">get.enriched.motif</span>(<span class="dt">data =</span> mae,
@@ -560,34 +553,40 @@ enriched.motif &lt;-<span class="st"> </span><span class="kw">get.enriched.motif
 <pre><code>##  [1] &quot;ARI3A_HUMAN.H10MO.D&quot; &quot;ARI5B_HUMAN.H10MO.C&quot; &quot;BARH1_HUMAN.H10MO.D&quot;
 ##  [4] &quot;BARX1_HUMAN.H10MO.D&quot; &quot;BATF_HUMAN.H10MO.S&quot;  &quot;BCL6_HUMAN.H10MO.C&quot; 
 ##  [7] &quot;CDC5L_HUMAN.H10MO.D&quot; &quot;CDX1_HUMAN.H10MO.C&quot;  &quot;CDX2_HUMAN.H10MO.C&quot; 
-## [10] &quot;CEBPG_HUMAN.H10MO.C&quot; &quot;CPEB1_HUMAN.H10MO.D&quot; &quot;E2F8_HUMAN.H10MO.D&quot; 
-## [13] &quot;EVX1_HUMAN.H10MO.D&quot;  &quot;EVX2_HUMAN.H10MO.A&quot;  &quot;FOSB_HUMAN.H10MO.C&quot; 
-## [16] &quot;FOSL1_HUMAN.H10MO.A&quot; &quot;FOSL2_HUMAN.H10MO.A&quot; &quot;FOS_HUMAN.H10MO.A&quot;  
-## [19] &quot;FOXJ3_HUMAN.H10MO.S&quot; &quot;FOXO1_HUMAN.H10MO.C&quot; &quot;FOXQ1_HUMAN.H10MO.C&quot;
-## [22] &quot;GATA3_HUMAN.H10MO.C&quot; &quot;GATA5_HUMAN.H10MO.D&quot; &quot;GSX2_HUMAN.H10MO.D&quot; 
-## [25] &quot;HMGA1_HUMAN.H10MO.D&quot; &quot;HXB3_HUMAN.H10MO.D&quot;  &quot;HXB7_HUMAN.H10MO.C&quot; 
-## [28] &quot;HXC6_HUMAN.H10MO.D&quot;  &quot;HXD11_HUMAN.H10MO.D&quot; &quot;HXD12_HUMAN.H10MO.D&quot;
-## [31] &quot;HXD8_HUMAN.H10MO.D&quot;  &quot;HXD9_HUMAN.H10MO.D&quot;  &quot;IRF1_HUMAN.H10MO.A&quot; 
-## [34] &quot;IRF3_HUMAN.H10MO.C&quot;  &quot;IRF5_HUMAN.H10MO.D&quot;  &quot;IRF9_HUMAN.H10MO.C&quot; 
-## [37] &quot;IRX3_HUMAN.H10MO.D&quot;  &quot;JUNB_HUMAN.H10MO.C&quot;  &quot;JUND_HUMAN.H10MO.A&quot; 
-## [40] &quot;JUN_HUMAN.H10MO.A&quot;   &quot;LHX3_HUMAN.H10MO.C&quot;  &quot;MAFG_HUMAN.H10MO.C&quot; 
-## [43] &quot;MEF2B_HUMAN.H10MO.D&quot; &quot;MNX1_HUMAN.H10MO.D&quot;  &quot;NANOG_HUMAN.H10MO.A&quot;
-## [46] &quot;NFAC2_HUMAN.H10MO.B&quot; &quot;NFAC4_HUMAN.H10MO.C&quot; &quot;NFAT5_HUMAN.H10MO.D&quot;
-## [49] &quot;NKX31_HUMAN.H10MO.C&quot; &quot;NKX61_HUMAN.H10MO.D&quot; &quot;PBX1_HUMAN.H10MO.B&quot; 
-## [52] &quot;PHX2B_HUMAN.H10MO.D&quot; &quot;PO2F1_HUMAN.H10MO.B&quot; &quot;PO3F3_HUMAN.H10MO.D&quot;
-## [55] &quot;PO6F1_HUMAN.H10MO.D&quot; &quot;SOX2_HUMAN.H10MO.B&quot;  &quot;SOX3_HUMAN.H10MO.D&quot; 
-## [58] &quot;SRY_HUMAN.H10MO.B&quot;   &quot;STAT2_HUMAN.H10MO.B&quot; &quot;TBP_HUMAN.H10MO.C&quot;  
-## [61] &quot;ZFHX3_HUMAN.H10MO.D&quot; &quot;ZN282_HUMAN.H10MO.D&quot; &quot;ZN384_HUMAN.H10MO.C&quot;
-## [64] &quot;ZSC16_HUMAN.H10MO.D&quot;</code></pre>
+## [10] &quot;CEBPD_HUMAN.H10MO.B&quot; &quot;CEBPG_HUMAN.H10MO.C&quot; &quot;CPEB1_HUMAN.H10MO.D&quot;
+## [13] &quot;DMBX1_HUMAN.H10MO.D&quot; &quot;E2F8_HUMAN.H10MO.D&quot;  &quot;EVX1_HUMAN.H10MO.D&quot; 
+## [16] &quot;EVX2_HUMAN.H10MO.A&quot;  &quot;FOSB_HUMAN.H10MO.C&quot;  &quot;FOSL1_HUMAN.H10MO.A&quot;
+## [19] &quot;FOSL2_HUMAN.H10MO.A&quot; &quot;FOS_HUMAN.H10MO.A&quot;   &quot;FOXA3_HUMAN.H10MO.C&quot;
+## [22] &quot;FOXC1_HUMAN.H10MO.C&quot; &quot;FOXD1_HUMAN.H10MO.D&quot; &quot;FOXF1_HUMAN.H10MO.D&quot;
+## [25] &quot;FOXF2_HUMAN.H10MO.D&quot; &quot;FOXJ3_HUMAN.H10MO.A&quot; &quot;FOXJ3_HUMAN.H10MO.S&quot;
+## [28] &quot;FOXO1_HUMAN.H10MO.C&quot; &quot;FOXP3_HUMAN.H10MO.D&quot; &quot;FOXQ1_HUMAN.H10MO.C&quot;
+## [31] &quot;FUBP1_HUMAN.H10MO.D&quot; &quot;GSX2_HUMAN.H10MO.D&quot;  &quot;HBP1_HUMAN.H10MO.D&quot; 
+## [34] &quot;HMGA1_HUMAN.H10MO.D&quot; &quot;HMX1_HUMAN.H10MO.D&quot;  &quot;HXA10_HUMAN.H10MO.C&quot;
+## [37] &quot;HXA1_HUMAN.H10MO.C&quot;  &quot;HXB3_HUMAN.H10MO.D&quot;  &quot;HXB7_HUMAN.H10MO.C&quot; 
+## [40] &quot;HXC10_HUMAN.H10MO.D&quot; &quot;HXC6_HUMAN.H10MO.D&quot;  &quot;HXD11_HUMAN.H10MO.D&quot;
+## [43] &quot;HXD12_HUMAN.H10MO.D&quot; &quot;HXD8_HUMAN.H10MO.D&quot;  &quot;IRF1_HUMAN.H10MO.A&quot; 
+## [46] &quot;IRF3_HUMAN.H10MO.C&quot;  &quot;IRF9_HUMAN.H10MO.C&quot;  &quot;IRX3_HUMAN.H10MO.D&quot; 
+## [49] &quot;JUND_HUMAN.H10MO.A&quot;  &quot;JUN_HUMAN.H10MO.A&quot;   &quot;LMX1A_HUMAN.H10MO.D&quot;
+## [52] &quot;MAFG_HUMAN.H10MO.C&quot;  &quot;MEF2B_HUMAN.H10MO.D&quot; &quot;MITF_HUMAN.H10MO.C&quot; 
+## [55] &quot;MNX1_HUMAN.H10MO.D&quot;  &quot;NANOG_HUMAN.H10MO.A&quot; &quot;NANOG_HUMAN.H10MO.S&quot;
+## [58] &quot;NFAC2_HUMAN.H10MO.B&quot; &quot;NFAC4_HUMAN.H10MO.C&quot; &quot;NFAT5_HUMAN.H10MO.D&quot;
+## [61] &quot;NKX31_HUMAN.H10MO.C&quot; &quot;PAX6_HUMAN.H10MO.D&quot;  &quot;PBX1_HUMAN.H10MO.B&quot; 
+## [64] &quot;PO2F1_HUMAN.H10MO.B&quot; &quot;PO2F2_HUMAN.H10MO.D&quot; &quot;PO3F3_HUMAN.H10MO.D&quot;
+## [67] &quot;PO3F4_HUMAN.H10MO.D&quot; &quot;PO4F3_HUMAN.H10MO.D&quot; &quot;PO5F1_HUMAN.H10MO.A&quot;
+## [70] &quot;PROP1_HUMAN.H10MO.D&quot; &quot;SOX2_HUMAN.H10MO.B&quot;  &quot;SOX3_HUMAN.H10MO.D&quot; 
+## [73] &quot;SRY_HUMAN.H10MO.B&quot;   &quot;STAT2_HUMAN.H10MO.B&quot; &quot;ZFHX3_HUMAN.H10MO.D&quot;
+## [76] &quot;ZN282_HUMAN.H10MO.D&quot; &quot;ZSC16_HUMAN.H10MO.D&quot;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(enriched.motif[<span class="kw">names</span>(enriched.motif)[<span class="dv">1</span>]]) ## probes in the given set that have the first motif.</code></pre></div>
 <pre><code>## $ARI3A_HUMAN.H10MO.D
-##  [1] &quot;cg15687000&quot; &quot;cg14032261&quot; &quot;cg25210796&quot; &quot;cg18766795&quot; &quot;cg09858925&quot;
-##  [6] &quot;cg24296187&quot; &quot;cg27428948&quot; &quot;cg22787719&quot; &quot;cg24873093&quot; &quot;cg20152088&quot;
-## [11] &quot;cg15965383&quot; &quot;cg18857402&quot; &quot;cg24593832&quot; &quot;cg11718886&quot; &quot;cg00255699&quot;
-## [16] &quot;cg25729466&quot; &quot;cg17901924&quot; &quot;cg13081288&quot; &quot;cg22153407&quot; &quot;cg16926213&quot;
-## [21] &quot;cg20146241&quot; &quot;cg12213388&quot; &quot;cg12792264&quot; &quot;cg18395632&quot; &quot;cg17181043&quot;
-## [26] &quot;cg21686171&quot; &quot;cg18345456&quot; &quot;cg14170793&quot; &quot;cg17516825&quot; &quot;cg16276225&quot;
-## [31] &quot;cg10574861&quot; &quot;cg20995977&quot;</code></pre>
+##  [1] &quot;cg15687000&quot; &quot;cg04923840&quot; &quot;cg14032261&quot; &quot;cg25210796&quot; &quot;cg20704530&quot;
+##  [6] &quot;cg10037894&quot; &quot;cg25463742&quot; &quot;cg18766795&quot; &quot;cg21400442&quot; &quot;cg09858925&quot;
+## [11] &quot;cg24296187&quot; &quot;cg12446045&quot; &quot;cg27428948&quot; &quot;cg22787719&quot; &quot;cg24873093&quot;
+## [16] &quot;cg20152088&quot; &quot;cg15965383&quot; &quot;cg18857402&quot; &quot;cg24593832&quot; &quot;cg11718886&quot;
+## [21] &quot;cg00255699&quot; &quot;cg25729466&quot; &quot;cg17901924&quot; &quot;cg13081288&quot; &quot;cg22153407&quot;
+## [26] &quot;cg07347148&quot; &quot;cg22947094&quot; &quot;cg16926213&quot; &quot;cg20146241&quot; &quot;cg12213388&quot;
+## [31] &quot;cg12792264&quot; &quot;cg18395632&quot; &quot;cg17181043&quot; &quot;cg21686171&quot; &quot;cg19938167&quot;
+## [36] &quot;cg18345456&quot; &quot;cg14170793&quot; &quot;cg17516825&quot; &quot;cg16276225&quot; &quot;cg10574861&quot;
+## [41] &quot;cg20995977&quot;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># get.enriched.motif automatically save output files. </span>
 <span class="co"># getMotif.hypo.enriched.motifs.rda contains enriched motifs and the probes with the motif. </span>
 <span class="co"># getMotif.hypo.motif.enrichment.csv contains summary of enriched motifs.</span>
@@ -597,8 +596,7 @@ enriched.motif &lt;-<span class="st"> </span><span class="kw">get.enriched.motif
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># motif enrichment figure will be automatically generated.</span>
 <span class="kw">dir</span>(<span class="dt">path =</span> <span class="st">&quot;result&quot;</span>, <span class="dt">pattern =</span> <span class="st">&quot;motif.enrichment.pdf&quot;</span>) </code></pre></div>
 <pre><code>## [1] &quot;hypo.all.quality.motif.enrichment.pdf&quot; 
-## [2] &quot;hypo.quality.A-B.motif.enrichment.pdf&quot; 
-## [3] &quot;hypo.quality.A-DS.motif.enrichment.pdf&quot;</code></pre>
+## [2] &quot;hypo.quality.A-DS.motif.enrichment.pdf&quot;</code></pre>
 </div>
 </div>
 <div id="bibliography" class="section level1 unnumbered">
