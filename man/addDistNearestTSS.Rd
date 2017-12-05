@@ -10,6 +10,8 @@ addDistNearestTSS(data, NearGenes, cores = 1)
 \item{data}{A multi Assay Experiment with both DNA methylation and gene Expression objects}
 
 \item{NearGenes}{A list or a data frame with the pairs gene probes}
+
+\item{cores}{Number fo cores to be used. Deafult: 1}
 }
 \description{
 Calculate the distance between probe and gene TSS
@@ -17,7 +19,9 @@ Calculate the distance between probe and gene TSS
 \examples{
 \dontrun{
  data <- ELMER:::getdata("elmer.data.example")
-  NearbyGenes <- GetNearGenes(data = data, probes = c("cg15924102", "cg24741609"),  numFlankingGenes = 20)
+  NearbyGenes <- GetNearGenes(data = data, 
+                              probes = c("cg15924102", "cg24741609"),  
+                              numFlankingGenes = 20)
   NearbyGenes <- addDistNearestTSS(data,NearbyGenes)
   NearbyGenes <- addDistNearestTSS(data,NearbyGenes[[1]])
 }
