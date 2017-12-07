@@ -9,6 +9,8 @@ bioc_required: true
 bioc_use_devel: true
 warnings_are_errors: false
 
+r_check_args: '--ignore-vignettes --no-examples'
+
 os:
   - linux
   - osx
@@ -64,6 +66,11 @@ r_github_packages:
   - hfang-bristol/dnet
   - BioinformaticsFMRP/TCGAbiolinks
   - klutometis/roxygen
+
+script: 
+  - |
+    travis_wait R CMD build .
+    travis_wait 60 R CMD check ELMER*tar.gz
 
 after_script:
   - ls -lah
