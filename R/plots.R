@@ -458,15 +458,23 @@ heatmapGene <- function(data,
     gene.info <- rowRanges(getExp(data))
     
     gene.location <- gene.info[gene.info$external_gene_name == GeneSymbol,]
-    
-    # Get closer genes
+    print(gene.location)
+    # Get closest genes
     gene.follow <- gene.info[follow(gene.info[gene.info$external_gene_name == GeneSymbol,],gene.info,ignore.strand=T),]$external_gene_name
+    gene.follow2 <- gene.info[follow(gene.info[gene.info$external_gene_name == gene.follow,],gene.info,ignore.strand=T),]$external_gene_name
     gene.precede <- gene.info[precede(gene.info[gene.info$external_gene_name == GeneSymbol,],gene.info,ignore.strand=T),]$external_gene_name
-    gene.gr <- gene.info[gene.info$external_gene_name %in% c(gene.follow,gene.precede,GeneSymbol),]
+    gene.precede2 <- gene.info[precede(gene.info[gene.info$external_gene_name == gene.precede,],gene.info,ignore.strand=T),]$external_gene_name
+    gene.gr <- gene.info[gene.info$external_gene_name %in% c(gene.follow,
+                                                             gene.follow2,
+                                                             gene.precede,
+                                                             gene.precede2,
+                                                             GeneSymbol),]
     # Get the regions of the 2 nearest genes, we will get all probes on those regions
+    
     regions <- range(gene.gr)
-    p <- names(sort(subsetByOverlaps(probes.info,regions)))
-    p <- names(sort(subsetByOverlaps(probes.info,resize(regions))))
+    print(regions)
+    p <- names(sort(subsetByOverlaps(probes.info,regions,)))
+    #p <- names(sort(subsetByOverlaps(probes.info,resize(regions))))
     if(length(p) == 0) stop("No probes close to the gene were found")
     neargenes <- ELMER::GetNearGenes(probes = p,
                                      data = data,
