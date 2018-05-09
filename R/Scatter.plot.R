@@ -198,13 +198,13 @@ scatter.plot <- function(data,
 scatter <- function(meth, 
                     exp, 
                     legend.title = "Legend",
-                    category=NULL, 
-                    xlab=NULL, 
-                    ylab=NULL,
-                    title=NULL,
+                    category = NULL, 
+                    xlab = NULL, 
+                    ylab = NULL,
+                    title = NULL,
                     correlation = FALSE,
-                    color.value=NULL,
-                    lm_line=FALSE){
+                    color.value = NULL,
+                    lm_line = FALSE){
   
   if(is.null(category)) category <- rep(1,length(meth))
   
@@ -217,18 +217,19 @@ scatter <- function(meth,
     P <- ggplot(df, aes(x = meth, y = value, color = factor(category))) +
       geom_point(size = 0.9) +
       facet_wrap(facets = ~ variable, ncol = 5) +
-      scale_x_continuous(limits=c(0,1),breaks=c(0,0.25,0.5,0.75,1)) +
+      scale_x_continuous(limits = c(0,1),breaks = c(0, 0.25, 0.5, 0.75, 1)) +
       theme_bw() +
       theme(panel.grid.major = element_blank(),  
             legend.position="bottom",
             legend.key = element_rect(colour = 'white'), 
-            axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5)) +
+            axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
       labs(x=xlab,y=ylab,title=title) + 
       scale_colour_discrete(name=legend.title) + 
       guides(colour = guide_legend(override.aes = list(size=4),
                                    title.position="top", 
                                    nrow = ceiling(sum(stringr::str_length(unique(category)))/100),
                                    title.hjust = 0.5)) 
+
     if(!is.null(color.value)) P <- P + scale_colour_manual(values = color.value)
     if(lm_line) P <- P + geom_smooth(method = "lm", se=FALSE, color="black", formula = y ~ x,data=df)
     if(correlation){
