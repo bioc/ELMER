@@ -867,11 +867,12 @@ getMatrix <- function(filename) {
 #' @description Calculates fisher exact test
 #' @param foreground A nsparseMatrix object in each 1 means the motif is found in a region, 0 not.
 #' @param background A nsparseMatrix object in each 1 means the motif is found in a region, 0 not.
+#' @export
 #' @examples 
-#' foreground <- Matrix::Matrix(sample(0:1,size = 100,replace = T), nrow = 10, ncol = 10,sparse = TRUE)
+#' foreground <- Matrix::Matrix(sample(0:1,size = 100,replace = TRUE), nrow = 10, ncol = 10,sparse = TRUE)
 #' rownames(foreground) <- paste0("region",1:10)
 #' colnames(foreground) <- paste0("motif",1:10)
-#' background <- Matrix::Matrix(sample(0:1,size = 100,replace = T), nrow = 10, ncol = 10,sparse = TRUE)
+#' background <- Matrix::Matrix(sample(0:1,size = 100,replace = TRUE), nrow = 10, ncol = 10,sparse = TRUE)
 #' rownames(background) <- paste0("region",1:10)
 #' colnames(background) <- paste0("motif",1:10)
 #' calculateEnrichement(foreground,background)
@@ -919,19 +920,26 @@ calculateEnrichement <- function(foreground,
 #' Step:
 #' 1 - get DNA methylation probes annotation with the regions
 #' 2 - Make a bed file from it
-#' 3 - Execute section: Finding Instance of Specific Motifs from http://homer.salk.edu/homer/ngs/peakMotifs.html to the HOCOMOCO TF motifs
+#' 3 - Execute section: Finding Instance of Specific Motifs 
+#' from http://homer.salk.edu/homer/ngs/peakMotifs.html to the HOCOMOCO TF motifs
 #' Also, As HOMER is using more RAM than the available we will split the files in to 100k probes.
-#' Obs: for each probe we create a winddow of 500 bp (-size 500) around it. This might lead to false positives, but will not have false negatives.
+#' Obs: for each probe we create a winddow of 500 bp (-size 500) around it. 
+#' This might lead to false positives, but will not have false negatives.
 #' The false posives will be removed latter with some statistical tests.
 #' @examples 
 #' \dontrun{
 #'  # use the center of the region and +-250bp around it
-#'  gr0 <- GRanges(Rle(c("chr2", "chr2", "chr1", "chr3"), c(1, 3, 2, 4)), IRanges(1:10, width=10:1))
+#'  gr0 <- GRanges(Rle(c("chr2", "chr2", "chr1", "chr3"), 
+#'                     c(1, 3, 2, 4)
+#'                     ), 
+#'                IRanges(1:10, width=10:1)
+#'                )
 #'  names(gr0) <- paste0("ID",c(1:10))
 #'  findMotifRegion(regions = gr0, region.size = 500, genome = "hg38", cores = 1)
 #'  
 #'  # use the region size itself
-#'  gr1 <- GRanges(Rle(c("chr2", "chr2", "chr1", "chr3"), c(1, 3, 2, 4)), IRanges(1:10, width=sample(200:1000,10)))
+#'  gr1 <- GRanges(Rle(c("chr2", "chr2", "chr1", "chr3"), c(1, 3, 2, 4)), 
+#'                 IRanges(1:10, width=sample(200:1000,10)))
 #'  names(gr1) <- paste0("ID",c(1:10))
 #'  findMotifRegion(regions = gr0, genome = "hg38", cores = 1)
 #' }
@@ -941,19 +949,20 @@ findMotifRegion <- function(regions,
                             genome = "hg38",
                             cores = 1){
   
+  if(!is(regions, class(GRanges()))) stop("Regions must be a Genomic Ranges object")
   # get all hocomoco 11 motifs
   TFBS.motif <- "http://hocomoco11.autosome.ru/final_bundle/hocomoco11/full/HUMAN/mono/HOCOMOCOv11_full_HUMAN_mono_homer_format_0.0001.motif"
   if(!file.exists(basename(TFBS.motif))) downloader::download(TFBS.motif,basename(TFBS.motif))
+  
   if(!file.exists(output.filename)){
-    
     df <- data.frame(seqnames = seqnames(gr),
                      starts = as.integer(start(gr)),
                      ends = end(gr),
                      names = names(gr),
                      scores = c(rep(".", length(gr))),
                      strands = strand(gr))
-    step <- 1000 # nb of lines in each file. 1K was selected to not explode RAM
     n <- nrow(df)
+    step <- ifelse(n > 1000, 1000, n )
     pb <- txtProgressBar(max = floor(n/step), style = 3)
     
     for(j in 0:floor(n/step)){
@@ -970,7 +979,12 @@ findMotifRegion <- function(regions,
                      ifelse(is.null(region.size),"",paste0("-size ", region.size)),
                      "-cpu", cores,
                      ">", gsub(".bed",".txt",file.aux))
-        system(cmd)
+        error <- system(cmd)
+        if(error == 127) {
+          unlink(file.aux)
+          unlink(gsub(".bed",".txt",file.aux))
+          stop("annotatePeaks.pl had an error. Please check homer install")
+        }
       }
     }
   }
@@ -980,17 +994,20 @@ findMotifRegion <- function(regions,
   pb <- txtProgressBar(max = floor(n/step), style = 3)
   for(j in 0:floor(n/step)){
     setTxtProgressBar(pb, j)
-    aux <-  readr::read_tsv(paste0(plat,gen,"_",j,".txt"))
-    colnames(aux)[1] <- "PeakID"
-    if(is.null(peaks)) {
-      peaks <- aux
-    } else {
-      peaks <- rbind(peaks, aux)
+    f <- paste0(gsub(".txt","",output.filename),"_",j,".txt")
+    if(file.exists(f)){
+      aux <-  readr::read_tsv(f)
+      colnames(aux)[1] <- "PeakID"
+      if(is.null(peaks)) {
+        peaks <- aux
+      } else {
+        peaks <- rbind(peaks, aux)
+      }
     }
     gc()
   }
   close(pb)
   print("Writing file...")
-  readr::write_tsv(peaks, path = file,col_names = TRUE)
+  if(!is.null(peaks)) readr::write_tsv(peaks, path = file,col_names = TRUE)
   print("DONE!")
 }
