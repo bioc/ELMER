@@ -749,3 +749,247 @@ getHocomocoTable <- function(){
   hocomoco <- merge(hocomoco,x, by = "Model")
   return(hocomoco)
 }
+
+#' @title Get random pairs
+#' @description 
+#' This function will receive a pair gene probes and will return a 
+#' random object with the following pattern, if a probe is linked to R1 and L3 genes
+#' the random pairs will be a random probes (a distal probe not in the input pairs) 
+#' also linked to its R1 and L3 gene.
+#' @param pairs A data frame with probe, gene and side information. See example below.
+#' @param met.platform DNA methyaltion platform to retrieve data from: EPIC or 450K (default)
+#' @param genome Which genome build will be used: hg38 (default) or hg19.
+#' @param cores A interger which defines the number of cores to be used in parallel 
+#' process. Default is 1: no parallel process.
+#' @return A data frame with the random linkages
+#' @examples
+#' \dontrun{
+#'  data <- ELMER:::getdata("elmer.data.example")
+#'  nearGenes <- GetNearGenes(TRange=getMet(data)[c("cg00329272","cg10097755"),],
+#'                             geneAnnot=getExp(data))
+#'                             
+#'  pair <- get.pair(data = data,
+#'                   group.col = "definition", 
+#'                   group1 = "Primary solid Tumor", 
+#'                   group2 = "Solid Tissue Normal",
+#'                   mode = "supervised",
+#'                   diff.dir = "hypo",
+#'                   nearGenes = nearGenes,
+#'                   permu.size = 5,
+#'                   raw.pvalue =  0.001,
+#'                   Pe = 0.2,
+#'                   dir.out="./",
+#'                   permu.dir = "permu_test",
+#'                   label = "hypo")
+#' }
+#'  pair <- data.frame(Probe = rep("cg00329272",3), 
+#'                     GeneID = c("ENSG00000116213","ENSG00000130762","ENSG00000149527"),
+#'                     Sides = c("R5","R2","L4"))                    
+#'  getRandomPairs(pair)
+getRandomPairs <- function(pairs, 
+                           genome = "hg38",
+                           met.platform = "450K",
+                           cores = 1) {
+  
+  if(missing(pairs)) stop("Please set pairs argument")
+  if(is.data.frame(pairs))
+    pairs <- as.data.frame(pairs)
+  
+  # Get Probe information
+  data("hm450.hg38.manifest")
+  probes.ranges <- as.data.frame(hm450.hg38.manifest)[,1:5]
+  colnames(probes.ranges) <- paste0("probe_",colnames(probes.ranges))
+  
+  # Get distal probes not in the pairs
+  distal.probe <- get.feature.probe(genome = genome,
+                                    met.platform = met.platform,
+                                    feature = NULL) # get distal probes
+  distal.probe <- distal.probe[!names(distal.probe) %in% pairs$Probe,] # Select probes were not used
+  
+  nb.pairs <- nrow(pairs)
+  nb.probes <- length(unique(pairs$Probe))
+  
+  # get gene information
+  genes <- TCGAbiolinks:::get.GRCh.bioMart(genome = genome,as.granges = TRUE)
+  
+  df.random <- NULL
+  # We will get the double of random probes, because some will not be used in case it does not matches the position
+  # Example: real probe + gene R10 and random probe does not have R10. Discart and get next random
+  random.probes <- distal.probe[sample(1:length(distal.probe), nb.probes * 2),]
+  near.genes <- GetNearGenes(TRange = random.probes, 
+                             geneAnnot = genes, 
+                             numFlankingGenes = 24, 
+                             cores = cores)
+  near.genes.df <- data.table::rbindlist(near.genes)
+  # Now we should get the exactly same genes positions
+  # if probe 1 was linked to R4 and L10 the random probe 1 will also be linked to its R4 and L10
+  near.genes.linked <- NULL
+  eval <- 1
+  for(p in 1:length(near.genes)){
+    side <- unique(pairs[pairs$Probe == unique(pairs$Probe)[eval],"Sides"])
+    aux <-  near.genes.df[near.genes.df$Target == names(near.genes)[p],]
+    same <- aux[aux$Side %in% side,]
+    # If I do not have the same nearby positions
+    if(length(side) != nrow(same)) next
+    near.genes.linked <- rbind(near.genes.linked, same)
+    eval <- eval+ 1
+    if(length(unique(near.genes.linked$Target)) == nb.probes) break
+  }
+  colnames(near.genes.linked)[1] <- "Probe" 
+  
+  # Add probe metadata to output
+  probes.ranges$Probe <- rownames(probes.ranges)
+  near.genes.linked <- merge(near.genes.linked,probes.ranges,by ="Probe")
+  
+  return(near.genes.linked)
+}
+
+
+# Reading homer output. For each reagion (rows)
+# homer will try to find if a given motif was found in it.
+# This will read this homer file and create a sparce matrix
+# in which 1 means the motif was found and 0 not found.
+# this is used to calculate the motif enrichement compared 
+# to a background signal.
+getMatrix <- function(filename) {
+  motifs <- readr::read_tsv(filename)
+  # From 1 to 21 we have annotations
+  matrix <- Matrix::Matrix(0, nrow = nrow(motifs), ncol = ncol(motifs) - 21 ,sparse = TRUE)
+  colnames(matrix) <- gsub(" Distance From Peak\\(sequence,strand,conservation\\)","",colnames(motifs)[-c(1:21)])
+  rownames(matrix) <- motifs$PeakID
+  matrix[!is.na(motifs[,-c(1:21)])] <- 1
+  matrix <- as(matrix, "nsparseMatrix")
+  return(matrix)
+}
+
+#' @title Calculate motif Erichment 
+#' @description Calculates fisher exact test
+#' @param foreground A nsparseMatrix object in each 1 means the motif is found in a region, 0 not.
+#' @param background A nsparseMatrix object in each 1 means the motif is found in a region, 0 not.
+#' @examples 
+#' foreground <- Matrix::Matrix(sample(0:1,size = 100,replace = T), nrow = 10, ncol = 10,sparse = TRUE)
+#' rownames(foreground) <- paste0("region",1:10)
+#' colnames(foreground) <- paste0("motif",1:10)
+#' background <- Matrix::Matrix(sample(0:1,size = 100,replace = T), nrow = 10, ncol = 10,sparse = TRUE)
+#' rownames(background) <- paste0("region",1:10)
+#' colnames(background) <- paste0("motif",1:10)
+#' calculateEnrichement(foreground,background)
+calculateEnrichement <- function(foreground, 
+                                 background){
+  if(missing(foreground)) stop("foreground argument is missing")
+  if(missing(background)) stop("background argument is missing")
+  
+  # a is the number of probes within the selected probe set that contain one or more motif occurrences; 
+  # b is the number of probes within the selected probe set that do not contain a motif occurrence; 
+  # c and d are the same counts within the entire enhancer probe set (background)
+  # lower boundary of 95% conf idence interval = exp (ln OR - SD)
+  a <- Matrix::colSums(foreground)
+  b <- nrow(foreground) - Matrix::colSums(foreground)
+  c <- Matrix::colSums(background)
+  d <- nrow(background) - Matrix::colSums(background)
+  fisher <- plyr::adply(seq_len(length(a)),.margins = 1, .fun = function(i)  { 
+    x <- fisher.test(matrix(c(a[i],b[i],c[i],d[i]),nrow = 2,ncol = 2))
+    ret <- data.frame(x$conf.int[1],x$conf.int[2],x$estimate,x$p.value)
+    colnames(ret) <- c("lowerOR","upperOR","OR","p.value")
+    ret
+  },.id = NULL,.progress = "text")
+  rownames(fisher) <- names(a)
+  Summary <- data.frame(motif  =  names(a),
+                        NumOfRegions = Matrix::colSums(foreground, na.rm=TRUE),
+                        fisher,
+                        FDR = p.adjust(fisher$p.value,method = "BH"),
+                        stringsAsFactors = FALSE)
+  Summary <- Summary[order(-Summary$lowerOR),]
+  return(Summary)
+}
+
+
+#' @title Use Hocomoco motif and homer to identify motifs in a given region
+#' @param regions A GRanges object. Names will be used as the identifier.
+#' @param output.filename Final file name
+#' @param region.size If NULL the motif will be mapped to the region. If set a window around its center will be considered.
+#' For example if region.size is 500, then +-250bp round it will be searched.
+#' @param cores A interger which defines the number of cores to be used in parallel 
+#' process. Default is 1: no parallel process.
+#' @param genome Homer genome (hg38, hg19)
+#' @description 
+#' To find for each probe the know motif we will use HOMER software (http://homer.salk.edu/homer/).
+#' Homer and genome should be installed before this function is executed
+#' Step:
+#' 1 - get DNA methylation probes annotation with the regions
+#' 2 - Make a bed file from it
+#' 3 - Execute section: Finding Instance of Specific Motifs from http://homer.salk.edu/homer/ngs/peakMotifs.html to the HOCOMOCO TF motifs
+#' Also, As HOMER is using more RAM than the available we will split the files in to 100k probes.
+#' Obs: for each probe we create a winddow of 500 bp (-size 500) around it. This might lead to false positives, but will not have false negatives.
+#' The false posives will be removed latter with some statistical tests.
+#' @examples 
+#' \dontrun{
+#'  # use the center of the region and +-250bp around it
+#'  gr0 <- GRanges(Rle(c("chr2", "chr2", "chr1", "chr3"), c(1, 3, 2, 4)), IRanges(1:10, width=10:1))
+#'  names(gr0) <- paste0("ID",c(1:10))
+#'  findMotifRegion(regions = gr0, region.size = 500, genome = "hg38", cores = 1)
+#'  
+#'  # use the region size itself
+#'  gr1 <- GRanges(Rle(c("chr2", "chr2", "chr1", "chr3"), c(1, 3, 2, 4)), IRanges(1:10, width=sample(200:1000,10)))
+#'  names(gr1) <- paste0("ID",c(1:10))
+#'  findMotifRegion(regions = gr0, genome = "hg38", cores = 1)
+#' }
+findMotifRegion <- function(regions, 
+                            output.filename = "mapped_motifs_regions.txt",
+                            region.size = NULL,
+                            genome = "hg38",
+                            cores = 1){
+  
+  # get all hocomoco 11 motifs
+  TFBS.motif <- "http://hocomoco11.autosome.ru/final_bundle/hocomoco11/full/HUMAN/mono/HOCOMOCOv11_full_HUMAN_mono_homer_format_0.0001.motif"
+  if(!file.exists(basename(TFBS.motif))) downloader::download(TFBS.motif,basename(TFBS.motif))
+  if(!file.exists(output.filename)){
+    
+    df <- data.frame(seqnames = seqnames(gr),
+                     starts = as.integer(start(gr)),
+                     ends = end(gr),
+                     names = names(gr),
+                     scores = c(rep(".", length(gr))),
+                     strands = strand(gr))
+    step <- 1000 # nb of lines in each file. 1K was selected to not explode RAM
+    n <- nrow(df)
+    pb <- txtProgressBar(max = floor(n/step), style = 3)
+    
+    for(j in 0:floor(n/step)){
+      setTxtProgressBar(pb, j)
+      # STEP 2
+      file.aux <- paste0(gsub(".txt","",output.filename),"_",j,".bed")
+      if(!file.exists(gsub(".bed",".txt",file.aux))){
+        end <- ifelse(((j + 1) * step) > n, n,((j + 1) * step))
+        write.table(df[((j * step) + 1):end,], file = file.aux, col.names = F, quote = F,row.names = F,sep = "\t")
+        
+        # STEP 3 use -mscore to get scores
+        # we need to check if annotatePeaks.pl is available!
+        cmd <- paste("annotatePeaks.pl" ,file.aux, genome, "-m", basename(TFBS.motif), 
+                     ifelse(is.null(region.size),"",paste0("-size ", region.size)),
+                     "-cpu", cores,
+                     ">", gsub(".bed",".txt",file.aux))
+        system(cmd)
+      }
+    }
+  }
+  close(pb)
+  # We will merge the results from each file into one
+  peaks <- NULL
+  pb <- txtProgressBar(max = floor(n/step), style = 3)
+  for(j in 0:floor(n/step)){
+    setTxtProgressBar(pb, j)
+    aux <-  readr::read_tsv(paste0(plat,gen,"_",j,".txt"))
+    colnames(aux)[1] <- "PeakID"
+    if(is.null(peaks)) {
+      peaks <- aux
+    } else {
+      peaks <- rbind(peaks, aux)
+    }
+    gc()
+  }
+  close(pb)
+  print("Writing file...")
+  readr::write_tsv(peaks, path = file,col_names = TRUE)
+  print("DONE!")
+}
