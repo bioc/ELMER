@@ -62,7 +62,8 @@ Imports:
     rmarkdown,
     stringr,
     tibble,
-    tidyr
+    tidyr,
+    progress
 Suggests:
     BiocStyle,
     knitr,
@@ -73,7 +74,9 @@ Suggests:
     webshot,
     rtracklayer,
     R.utils,
-    covr
+    covr,
+    purrr,
+    DelayedArray
 biocViews:
     DNAMethylation, 
     GeneExpression, 
@@ -82,4 +85,5 @@ biocViews:
     GeneRegulation,
     Transcription, 
     Network
+Encoding: UTF-8
 RoxygenNote: 6.1.1
