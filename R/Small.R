@@ -211,7 +211,7 @@ createMAE <- function (exp,
   if(class(exp) == class(as(SummarizedExperiment(),"RangedSummarizedExperiment"))){
     required.cols <- required.cols[!required.cols %in% colnames(values(exp))]
     if(length(required.cols) > 0) {
-      gene.info <- TCGAbiolinks:::get.GRCh.bioMart(genome)
+      gene.info <- TCGAbiolinks::get.GRCh.bioMart(genome)
       colnames(gene.info)[grep("external_gene", colnames(gene.info))] <- "external_gene_name"
       if(all(grepl("ENSG",rownames(exp)))) {
         extra <- as.data.frame(gene.info[match(rownames(exp),gene.info$ensembl_gene_id),required.cols])
@@ -235,7 +235,7 @@ createMAE <- function (exp,
     
     # Get clinical information
     if(missing(colData)) {
-      colData <- TCGAbiolinks:::colDataPrepare(c(colnames(met), colnames(exp)))
+      colData <- TCGAbiolinks::colDataPrepare(c(colnames(met), colnames(exp)))
       # This will keep the same strategy the old ELMER version used:
       # Every type of tumor samples (starts with T) will be set to tumor and
       # every type of normal samples   (starts with N) will be set to normal 
@@ -338,7 +338,7 @@ createMAE <- function (exp,
 makeSummarizedExperimentFromGeneMatrix <- function(exp, genome = genome){
   message("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
   message("Creating a SummarizedExperiment from gene expression input")
-  gene.info <- TCGAbiolinks:::get.GRCh.bioMart(genome)
+  gene.info <- TCGAbiolinks::get.GRCh.bioMart(genome)
   gene.info$chromosome_name <- paste0("chr",gene.info$chromosome_name)
   colnames(gene.info)[grep("external_gene", colnames(gene.info))] <- "external_gene_name"
   gene.info$strand[gene.info$strand == 1] <- "+"
@@ -497,40 +497,24 @@ getTSS <- function(genome = "hg38",
   msg <- character()
   while (tries < 3L) {
     tss <- tryCatch({
-      if (genome == "hg19"){
-        # for hg19
-        ensembl <- useMart(biomart = "ENSEMBL_MART_ENSEMBL",
-                           host = "feb2014.archive.ensembl.org",
-                           path = "/biomart/martservice" ,
-                           dataset = "hsapiens_gene_ensembl")
-        attributes <- c("chromosome_name",
-                        "start_position",
-                        "end_position", 
-                        "strand",
-                        "transcript_start",
-                        "transcript_end",
-                        "ensembl_transcript_id",
-                        "ensembl_gene_id", "entrezgene",
-                        "external_gene_id")
-      } else {
-        # for hg38
-        ensembl <- tryCatch({
-          useEnsembl("ensembl", dataset = "hsapiens_gene_ensembl")
-        },  error = function(e) {
-          useEnsembl("ensembl",
-                     dataset = "hsapiens_gene_ensembl",
-                     mirror = "uswest")
-        })
-        attributes <- c("chromosome_name",
-                        "start_position",
-                        "end_position", "strand",
-                        "ensembl_gene_id", 
-                        "transcription_start_site",
-                        "transcript_start",
-                        "ensembl_transcript_id",
-                        "transcript_end",
-                        "external_gene_name")
-      }
+      host <- ifelse(genome == "hg19",  "grch37.ensembl.org","www.ensembl.org")
+      ensembl <- tryCatch({
+        useEnsembl("ensembl", dataset = "hsapiens_gene_ensembl", host =  host)
+      },  error = function(e) {
+        useEnsembl("ensembl",
+                   dataset = "hsapiens_gene_ensembl",
+                   mirror = "uswest",
+                   host =  host)
+      })
+      attributes <- c("chromosome_name",
+                      "start_position",
+                      "end_position", "strand",
+                      "ensembl_gene_id", 
+                      "transcription_start_site",
+                      "transcript_start",
+                      "ensembl_transcript_id",
+                      "transcript_end",
+                      "external_gene_name")
       chrom <- c(1:22, "X", "Y","M","*")
       db.datasets <- listDatasets(ensembl)
       description <- db.datasets[db.datasets$dataset=="hsapiens_gene_ensembl",]$description
@@ -585,24 +569,16 @@ get.GRCh <- function(genome = "hg19", genes, as.granges = FALSE) {
   msg <- character()
   while (tries < 3L) {
     gene.location <- tryCatch({
-      if (genome == "hg19"){
-        # for hg19
-        ensembl <- useMart(biomart = "ENSEMBL_MART_ENSEMBL",
-                           host = "feb2014.archive.ensembl.org",
-                           path = "/biomart/martservice" ,
-                           dataset = "hsapiens_gene_ensembl")
-        attributes <- c("ensembl_gene_id", "entrezgene","external_gene_id")
-      } else {
-        # for hg38
-        ensembl <- tryCatch({
-          useEnsembl("ensembl", dataset = "hsapiens_gene_ensembl")
-        },  error = function(e) {
-          useEnsembl("ensembl",
-                     dataset = "hsapiens_gene_ensembl",
-                     mirror = "uswest")
-        })
-        attributes <- c("ensembl_gene_id", "entrezgene","external_gene_name")
-      }
+      host <- ifelse(genome == "hg19",  "grch37.ensembl.org","www.ensembl.org")
+      ensembl <- tryCatch({
+        useEnsembl("ensembl", dataset = "hsapiens_gene_ensembl", host =  host)
+      },  error = function(e) {
+        useEnsembl("ensembl",
+                   dataset = "hsapiens_gene_ensembl",
+                   mirror = "uswest",
+                   host =  host)
+      })
+      attributes <- c("ensembl_gene_id", "entrezgene","external_gene_name")
       gene.location <- getBM(attributes = attributes,
                              filters = c("entrezgene"),
                              values = list(genes), mart = ensembl)
@@ -769,6 +745,7 @@ getHocomocoTable <- function(){
 #' @return A data frame with the random linkages
 #' @export
 #' @importFrom dplyr pull filter
+#' @importFrom TCGAbiolinks get.GRCh.bioMart colDataPrepare
 #' @examples
 #' \dontrun{
 #'  data <- ELMER:::getdata("elmer.data.example")
@@ -800,11 +777,11 @@ getRandomPairs <- function(pairs,
   
   if(missing(pairs)) stop("Please set pairs argument")
   if(is.data.frame(pairs)) pairs <- as.data.frame(pairs)
-
+  
   # Rename column
   if("Side" %in% colnames(pairs)) colnames(pairs)[grep("Side",colnames(pairs))] <- "Sides"
   if(!"Sides" %in% colnames(pairs)) stop("No column Sides in the object")
-
+  
   if("Target" %in% colnames(pairs)) colnames(pairs)[grep("Target",colnames(pairs))] <- "Probe"
   if("ID" %in% colnames(pairs)) colnames(pairs)[colnames(pairs) == "ID"] <- "Probe"
   
@@ -829,7 +806,7 @@ getRandomPairs <- function(pairs,
   nb.pairs <- nrow(pairs)
   nb.probes <- length(unique(pairs$Probe))
   # get gene information
-  genes <- TCGAbiolinks:::get.GRCh.bioMart(genome = genome, as.granges = TRUE)
+  genes <- TCGAbiolinks::get.GRCh.bioMart(genome = genome, as.granges = TRUE)
   
   df.random <- NULL
   near.genes.linked <- NULL
@@ -847,11 +824,11 @@ getRandomPairs <- function(pairs,
     near.genes.linked <- plyr::alply(1:length(not.matched),
                                      .margins = 1,
                                      .fun = function(x){
-      side <- pairs %>% filter(Probe == unique(pairs$Probe)[not.matched[x]]) %>% pull(Sides)
-      ret <- near.genes %>% filter(ID == unique(near.genes$ID)[x] & Side %in% side)
-      if(!all(side %in% ret$Side)) return(NULL)
-      ret
-    },.progress = "time", .parallel = parallel)
+                                       side <- pairs %>% filter(Probe == unique(pairs$Probe)[not.matched[x]]) %>% pull(Sides)
+                                       ret <- near.genes %>% filter(ID == unique(near.genes$ID)[x] & Side %in% side)
+                                       if(!all(side %in% ret$Side)) return(NULL)
+                                       ret
+                                     },.progress = "time", .parallel = parallel)
     
     not.matched <- not.matched[grep("NULL",near.genes.linked)]
     if(length(not.matched) > 0){
@@ -981,18 +958,20 @@ findMotifRegion <- function(regions,
   TFBS.motif <- "http://hocomoco11.autosome.ru/final_bundle/hocomoco11/full/HUMAN/mono/HOCOMOCOv11_full_HUMAN_mono_homer_format_0.0001.motif"
   if(!file.exists(basename(TFBS.motif))) downloader::download(TFBS.motif,basename(TFBS.motif))
   
+  
+  if(is.null(names(regions))){
+    names(regions) <- tibble::as_tibble(regions) %>% tidyr::unite(col = "names","seqnames","start","end") %>% pull(names)
+  }
+  df <- data.frame(seqnames = seqnames(regions),
+                   starts = as.integer(start(regions)),
+                   ends = end(regions),
+                   names = names(regions),
+                   scores = c(rep(".", length(regions))),
+                   strands = strand(regions))
+  n <- nrow(df)
+  step <- ifelse(n > 1000, 1000, n )
+  
   if(!file.exists(output.filename)){
-    if(is.null(names(regions))){
-      names(regions) <- tibble::as_tibble(regions) %>% tidyr::unite(col = "names","seqnames","start","end") %>% pull(names)
-    }
-    df <- data.frame(seqnames = seqnames(regions),
-                     starts = as.integer(start(regions)),
-                     ends = end(regions),
-                     names = names(regions),
-                     scores = c(rep(".", length(regions))),
-                     strands = strand(regions))
-    n <- nrow(df)
-    step <- ifelse(n > 1000, 1000, n )
     pb <- txtProgressBar(max = floor(n/step), style = 3)
     
     for(j in 0:floor(n/step)){
@@ -1015,14 +994,14 @@ findMotifRegion <- function(regions,
           unlink(gsub(".bed",".txt",file.aux))
           stop(paste0("annotatePeaks.pl had an error. Please check homer install.",
                       "\nIf already installed be sure R can see it.",
-                      "You can change PATH evn variable with usethis::edit_r_environ()",
-                      "\nAdding, for example, a modified version of this line: PATH=$PATH:path_to_homer/bin:/usr/bin/")
-               )
+                      "You can change PATH evn variable with ",
+                      "\nSys.setenv(PATH=paste(Sys.getenv('PATH'), '/the/bin/folder/of/bedtools', sep=':'))")
+          )
         }
       }
     }
+    close(pb)
   }
-  close(pb)
   # We will merge the results from each file into one
   peaks <- NULL
   pb <- txtProgressBar(max = floor(n/step), style = 3)

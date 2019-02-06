@@ -738,7 +738,7 @@ createIGVtrack <- function(pairs,
     tss <- getTSS(genome = genome)
     tss <- tibble::as.tibble(tss)
   } else {
-    tss <- TCGAbiolinks:::get.GRCh.bioMart(genome = genome,as.granges = TRUE)
+    tss <- TCGAbiolinks::get.GRCh.bioMart(genome = genome,as.granges = TRUE)
     tss <- tibble::as.tibble(promoters(tss,upstream = 0,downstream = 0))
     tss$transcription_start_site <- tss$start
   }
@@ -782,7 +782,61 @@ createIGVtrack <- function(pairs,
   readr::write_delim(pairs, path = filename, append = TRUE)
 }
 
-
+#' @title Create a bigwig file for IGV visualization of DNA methylation data (Array)
+#' @description 
+#' Create a bigwig for IGV visualization of DNA methylation data (Array)
+#' @param data A matrix
+#' @param filename track.names (".bw")
+#' @param met.platform DNA methyaltion platform to retrieve data from: EPIC or 450K (default)
+#' @param genome Which genome build will be used: hg38 (default) or hg19.
+#' @param dir Which directory files will be saved
+#' @importFrom plyr a_ply
+#' @importFrom rtracklayer export.wig
+#' @importFrom GenomeInfoDb Seqinfo
+#' @export
+#' @author Tiago Chedraoui Silva (tiagochst at gmail.com)
+#' @examples
+#'  \dontrun{            
+#'  data <- assay(getMet(ELMER:::getdata("elmer.data.example")))
+#'  createBigWigDNAmetArray(data = data, met.platform = "450K", genome = "hg38")
+#'  }
+createBigWigDNAmetArray <- function(data = NULL,
+                                    genome = "hg38",
+                                    met.platform = "450K",
+                                    track.names = NULL,
+                                    dir = "IGV_tracks"){
+  
+  # where we will save the several tracks
+  dir.create(dir,recursive = TRUE, showWarnings = FALSE)
+  
+  # get genomic information for array
+  message("Preparing array metadata")
+  metadata <- getInfiniumAnnotation(plat = met.platform,genome = genome)
+  metadata <- metadata[!metadata$MASK_general,]
+  values(metadata) <- NULL
+  metadata$score <- NA
+  strand(metadata) <- "*"
+  metadata <- keepStandardChromosomes(metadata, pruning.mode="coarse")
+  seqinfo(metadata) <- Seqinfo(genome=genome) %>% keepStandardChromosomes
+  
+  message("Creating bigwig tracks")
+  # for each samples create the track
+  plyr::a_ply(colnames(data),1,.fun = function(sample){
+    idx <- which(sample == colnames(data))
+    metadata <- metadata[names(metadata) %in% rownames(data),]
+    data <- data[rownames(data) %in% names(metadata),]
+    met <- data[,sample]
+    metadata$score <- met[match(names(metadata),rownames(data))]
+    metadata <- metadata[!is.na(metadata$score),]
+    if(!is.null(track.names)) {
+      filename <- file.path(dir,track.names[idx])
+    } else {
+      filename <- file.path(dir,paste0(sample,".bw"))
+    }
+    message("\nSaving: ", filename)
+    rtracklayer::export.bw(object = metadata,con = filename)
+  },.progress = "time")
+}
 
 
 
@@ -815,104 +869,104 @@ get.tabs <- function(dir, classification = "family"){
 #' @importFrom dplyr full_join as_data_frame
 #' @importFrom purrr reduce
 get.tab <- function(dir,classification){
-    message("o Creating TF binary matrix")
-    tab <- purrr::reduce(lapply(dir, 
-                                function(x) {
-                                  ret <- ELMER:::summarizeTF(path = x,
-                                                             classification = classification,
-                                                             top = TRUE)
-                                  colnames(ret)[2] <- x
-                                  return(ret)
-                                }),
-                         dplyr::full_join)
-    tab[tab == "x"] <- 1
-    tab[is.na(tab)] <- 0
-    rownames(tab) <- tab$TF
-    tab$TF <- NULL
-    for(i in 1:ncol(tab)){
-      tab[,i] <- as.numeric(tab[,i])
-    }
-    tab <- tab[rowSums(tab) > 0,]
- return(tab)
+  message("o Creating TF binary matrix")
+  tab <- purrr::reduce(lapply(dir, 
+                              function(x) {
+                                ret <- summarizeTF(path = x,
+                                                   classification = classification,
+                                                   top = TRUE)
+                                colnames(ret)[2] <- x
+                                return(ret)
+                              }),
+                       dplyr::full_join)
+  tab[tab == "x"] <- 1
+  tab[is.na(tab)] <- 0
+  rownames(tab) <- tab$TF
+  tab$TF <- NULL
+  for(i in 1:ncol(tab)){
+    tab[,i] <- as.numeric(tab[,i])
+  }
+  tab <- tab[rowSums(tab) > 0,]
+  return(tab)
 }    
 
 #' @importFrom tidyr separate_rows gather
 get.tab.or <- function(dir, classification, tab){
-    col <- ifelse(classification == "family","top.potential.TF.family", "top.potential.TF.subfamily")
-    message("o Creating TF OR matrix")
-    # For each of those analysis get the enriched motifs and the MR TFs.
-    tab.or <- plyr::adply(dir,
-                          .margins = 1,
-                          function(path){
-                            TF <- readr::read_csv(dir(path = path, pattern = ".significant.TFs.with.motif.summary.csv",
-                                                      recursive = T,full.names = T),col_types = readr::cols())
-                            motif <- readr::read_csv(dir(path = path, pattern = ".motif.enrichment.csv",
-                                                         recursive = T,full.names = T),col_types = readr::cols())
-                            z <- tidyr::separate_rows(TF, col, convert = TRUE,sep = ";") %>% dplyr::full_join(motif)
-                            z <- z[order(-z$OR),] # Drecreasing order of OR
-                            OR <- z[match(rownames(tab),z[[col]]),] %>% pull(OR)
-                            OR
-                          },.id = NULL
-    )
-    tab.or <- t(tab.or)
-    rownames(tab.or) <- rownames(tab)
-    colnames(tab.or) <- colnames(tab)
-    return(tab.or)
+  col <- ifelse(classification == "family","top.potential.TF.family", "top.potential.TF.subfamily")
+  message("o Creating TF OR matrix")
+  # For each of those analysis get the enriched motifs and the MR TFs.
+  tab.or <- plyr::adply(dir,
+                        .margins = 1,
+                        function(path){
+                          TF <- readr::read_csv(dir(path = path, pattern = ".significant.TFs.with.motif.summary.csv",
+                                                    recursive = T,full.names = T),col_types = readr::cols())
+                          motif <- readr::read_csv(dir(path = path, pattern = ".motif.enrichment.csv",
+                                                       recursive = T,full.names = T),col_types = readr::cols())
+                          z <- tidyr::separate_rows(TF, col, convert = TRUE,sep = ";") %>% dplyr::full_join(motif)
+                          z <- z[order(-z$OR),] # Drecreasing order of OR
+                          OR <- z[match(rownames(tab),z[[col]]),] %>% pull(OR)
+                          OR
+                        },.id = NULL
+  )
+  tab.or <- t(tab.or)
+  rownames(tab.or) <- rownames(tab)
+  colnames(tab.or) <- colnames(tab)
+  return(tab.or)
 }
 
 #' @importFrom tidyr separate_rows gather
 get.tab.pval <- function(dir,classification,tab){ 
-    col <- ifelse(classification == "family","top.potential.TF.family", "top.potential.TF.subfamily")
-    message("o Creating TF FDR matrix")
-    # For each of those analysis get the correlation pvalue of MR TFs exp  vs Avg DNA met. of inferred TFBS.
-    tab.pval <- plyr::adply(dir,
-                            .margins = 1,
-                            function(path){
-                              TF <- readr::read_csv(dir(path = path, 
-                                                        pattern = ".significant.TFs.with.motif.summary.csv",
-                                                        recursive = T,full.names = T),col_types = readr::cols())
-                              motif <- readr::read_csv(dir(path = path, 
-                                                           pattern = ".motif.enrichment.csv",
-                                                           recursive = T,full.names = T),col_types = readr::cols())
-                              # For each TF breaks into lines (P53;P63) will create two lines. Then merge with motif to get OR value
-                              z <- tidyr::separate_rows(TF, col, convert = TRUE,sep = ";") %>% dplyr::full_join(motif)
-                              z <- z[order(-z$OR),] # Drecreasing order of OR
-                              colnames(z)[grep(paste0("^",col),colnames(z))] <- "TF"
-                              motif <- z[match(rownames(tab),z$TF),] %>% pull(motif) # get higher OR for that TF binding
-                              TF.meth.cor <- get(load(dir(path = path, pattern = ".TFs.with.motif.pvalue.rda", recursive = T, full.names = T)))
-                              TF.meth.cor <- cbind(TF.meth.cor,TF = rownames(TF.meth.cor))
-                              TF.meth.cor <- dplyr::as_data_frame(TF.meth.cor)
-                              # Create table TF, motif, FDR
-                              TF.meth.cor <- TF.meth.cor  %>% tidyr::gather(key = motif, value = FDR, -TF) 
-                              # get FDR for TF and motif
-                              FDR <- TF.meth.cor[match(paste0(rownames(tab),motif),paste0(TF.meth.cor$TF,TF.meth.cor$motif)),]  %>% dplyr::pull(FDR)
-                              as.numeric(FDR)
-                            },.id = NULL
-    )
-    
-    tab.pval <- t(tab.pval)
-    rownames(tab.pval) <- rownames(tab)
-    colnames(tab.pval) <- colnames(tab)
-    return(tab.pval)
+  col <- ifelse(classification == "family","top.potential.TF.family", "top.potential.TF.subfamily")
+  message("o Creating TF FDR matrix")
+  # For each of those analysis get the correlation pvalue of MR TFs exp  vs Avg DNA met. of inferred TFBS.
+  tab.pval <- plyr::adply(dir,
+                          .margins = 1,
+                          function(path){
+                            TF <- readr::read_csv(dir(path = path, 
+                                                      pattern = ".significant.TFs.with.motif.summary.csv",
+                                                      recursive = T,full.names = T),col_types = readr::cols())
+                            motif <- readr::read_csv(dir(path = path, 
+                                                         pattern = ".motif.enrichment.csv",
+                                                         recursive = T,full.names = T),col_types = readr::cols())
+                            # For each TF breaks into lines (P53;P63) will create two lines. Then merge with motif to get OR value
+                            z <- tidyr::separate_rows(TF, col, convert = TRUE,sep = ";") %>% dplyr::full_join(motif)
+                            z <- z[order(-z$OR),] # Drecreasing order of OR
+                            colnames(z)[grep(paste0("^",col),colnames(z))] <- "TF"
+                            motif <- z[match(rownames(tab),z$TF),] %>% pull(motif) # get higher OR for that TF binding
+                            TF.meth.cor <- get(load(dir(path = path, pattern = ".TFs.with.motif.pvalue.rda", recursive = T, full.names = T)))
+                            TF.meth.cor <- cbind(TF.meth.cor,TF = rownames(TF.meth.cor))
+                            TF.meth.cor <- dplyr::as_data_frame(TF.meth.cor)
+                            # Create table TF, motif, FDR
+                            TF.meth.cor <- TF.meth.cor  %>% tidyr::gather(key = motif, value = FDR, -TF) 
+                            # get FDR for TF and motif
+                            FDR <- TF.meth.cor[match(paste0(rownames(tab),motif),paste0(TF.meth.cor$TF,TF.meth.cor$motif)),]  %>% dplyr::pull(FDR)
+                            as.numeric(FDR)
+                          },.id = NULL
+  )
+  
+  tab.pval <- t(tab.pval)
+  rownames(tab.pval) <- rownames(tab)
+  colnames(tab.pval) <- colnames(tab)
+  return(tab.pval)
 }
 
 
 #' @importFrom DelayedArray rowMins
 get.top.tf.by.pval <- function(tab.pval,top = 5){
-    labels <- c()
-    for(i in 1:ncol(tab.pval)){
-      labels <- sort(
-        unique(
-          c(labels,
-            rownames(tab.pval)[head(sort(DelayedArray::rowMins(tab.pval[,i,drop = F],na.rm = T), 
-                                         index.return = TRUE, 
-                                         decreasing = F)$ix, 
-                                    n = top)]
-          )
+  labels <- c()
+  for(i in 1:ncol(tab.pval)){
+    labels <- sort(
+      unique(
+        c(labels,
+          rownames(tab.pval)[head(sort(DelayedArray::rowMins(tab.pval[,i,drop = F],na.rm = T), 
+                                       index.return = TRUE, 
+                                       decreasing = F)$ix, 
+                                  n = top)]
         )
       )
-    }
-
+    )
+  }
+  
   return(labels)
 }
 
