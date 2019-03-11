@@ -316,6 +316,9 @@ calcDistNearestTSS <- function(links,
   if(!"ID" %in% colnames(values(TRange))){
     TRange$ID <- names(TRange)
   }
+  if(!"ensembl_gene_id" %in% colnames(links)){
+    colnames(links)[grep("GeneID", colnames(links))] <- "ensembl_gene_id"
+  }
   merged <- dplyr::left_join(links,
                              suppressWarnings(tibble::as_tibble(tssAnnot)),
                              by = c("ensembl_gene_id"))
@@ -347,7 +350,7 @@ calcDistNearestTSS <- function(links,
   #ret <- ret[match(links %>% tidyr::unite(ID,Target,GeneID) %>% pull(ID),
   #          ret %>% tidyr::unite(ID,Target,GeneID) %>% pull(ID)),]
   links <- dplyr::full_join(links,ret)
-  colnames(ret)[1:3] <- c("ID","GeneID","Symbol")
+  colnames(links)[1:3] <- c("ID","GeneID","Symbol")
   return(links)
 }
 
@@ -441,10 +444,12 @@ getRegionNearGenes <- function(TRange = NULL,
         ))
       ))
     idx$evaluating <-  evaluating[idx$queryHits]
+    # remove same target gene and probe if counted twice
     idx <- idx[!duplicated(idx[, 2:3]), ]
+
     # todo remove already evaluated previously (we don't wanna do it again)
     idx <-
-      idx[!paste0(geneAnnot[idx$subjectHits]$ensembl_gene_id, names(TRange)[evaluating]) %in% paste0(ret$ensembl_gene_id, ret$ID), ]
+      idx[!paste0(geneAnnot[idx$subjectHits]$ensembl_gene_id, names(TRange)[idx$evaluating]) %in% paste0(ret$ensembl_gene_id, ret$ID), ]
     evaluating <- evaluating[idx$queryHits]
     ret <-
       rbind(ret, cbind(

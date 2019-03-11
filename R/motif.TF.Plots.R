@@ -12,6 +12,8 @@
 #'@param save A logic. If true (default), figure will be saved to dir.out.
 #'@param label A character. Labels the outputs figure.
 #'@param title Plot title. Default: no title
+#'@param width Plot width
+#'@param height Plot height
 #'@param summary Create a summary table along with the plot, it is necessary 
 #'to add two new columns to object (NumOfProbes and PercentageOfProbes)
 #'@return A figure shows the enrichment level for selected motifs.
@@ -71,6 +73,8 @@ motif.enrichment.plot <- function(motif.enrichment,
                                   save = TRUE,
                                   label = NULL,
                                   title = NULL, 
+                                  width = 10, 
+                                  height = NULL,
                                   summary = FALSE){
   if(missing(motif.enrichment)) stop("motif.enrichment is missing.")
   if(is.character(motif.enrichment)){
@@ -88,15 +92,20 @@ motif.enrichment.plot <- function(motif.enrichment,
     or.col <- paste0(round(motif.enrichment$OR,digits = 2), 
                      " (", round(motif.enrichment$lowerOR,digits = 2),"-", 
                      round(motif.enrichment$upperOR,digits = 2),")")
-    probe.col <- paste0(motif.enrichment$NumOfProbes,
-                        " (", round(100 * motif.enrichment$PercentageOfProbes, digits = 2),"%)")
+    nb.idx <- grep("NumOf",colnames(motif.enrichment))
+    if("PercentageOfProbes" %in% colnames(motif.enrichment)){
+      probe.col <- paste0(motif.enrichment[,nb.idx],
+                          " (", round(100 * motif.enrichment$PercentageOfProbes, digits = 2),"%)")
+    } else {
+      probe.col <- paste0(motif.enrichment[,nb.idx])
+    }
     lab <- data.frame(x = factor(c("",as.character(motif.enrichment$motif)), 
                                  levels = rev(c("",as.character(motif.enrichment$motif)))),
                       y = rep(c(1,2,3),each=length(motif.enrichment$motif) + 1),
                       z = c("Motif",gsub("_HUMAN.H11MO.*","",as.character(motif.enrichment$motif)),
                             "Odds ratio \n (95% CI)",
                             or.col, 
-                            "# probes \n(% of paired)",
+                            ifelse("PercentageOfProbes"  %in% colnames(motif.enrichment), "# probes \n(% of paired)"," # regions"),
                             probe.col)
     )
     
@@ -157,13 +166,14 @@ motif.enrichment.plot <- function(motif.enrichment,
       scale_y_continuous(breaks=c(1,pretty(motif.enrichment$OR, n = 5)))
   }
   if(save) {
+    dir.create(dir.out,recursive = TRUE,showWarnings = FALSE)
     ggsave(filename = sprintf("%s/%s.motif.enrichment.pdf",dir.out,label),
            useDingbats = FALSE, 
            plot = P,
            dpi = 320,
-           width = 10, 
+           width = width,
            limitsize = FALSE,
-           height = 3 * round(nrow(motif.enrichment)/8))
+           height = ifelse(is.null(height),3 * round(nrow(motif.enrichment)/8),height))
     return()
   }
   if(summary) grid.arrange(P)
@@ -269,7 +279,7 @@ TF.rank.plot <- function(motif.pvalue,
     registerDoParallel(cores)
     parallel = TRUE
   }
-
+  
   Plots <- alply(motif, 1, function(i){
     df <- data.frame(pvalue = motif.pvalue[,i], 
                      Gene = rownames(motif.pvalue), 

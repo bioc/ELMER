@@ -503,9 +503,14 @@ heatmapGene <- function(data,
     gene.info <- rowRanges(getExp(data))
     
     gene.location <- gene.info[gene.info$external_gene_name == GeneSymbol,]
+    if(length(gene.location) == 0) {
+      message("Gene not found: ", GeneSymbol)
+      return(NULL)
+    }
     # Get closer genes
-    gene.follow <- gene.info[follow(gene.info[gene.info$external_gene_name == GeneSymbol,],gene.info,ignore.strand=T),]$external_gene_name
-    gene.precede <- gene.info[precede(gene.info[gene.info$external_gene_name == GeneSymbol,],gene.info,ignore.strand=T),]$external_gene_name
+    selected.gene.gr <- gene.info[gene.info$external_gene_name == GeneSymbol,]
+    gene.follow <- gene.info[follow(selected.gene.gr,gene.info,ignore.strand=T),]$external_gene_name %>% as.character
+    gene.precede <- gene.info[precede(selected.gene.gr,gene.info,ignore.strand=T),]$external_gene_name %>% as.character
     gene.gr <- gene.info[gene.info$external_gene_name %in% c(gene.follow,gene.precede,GeneSymbol),]
     # Get the regions of the 2 nearest genes, we will get all probes on those regions
     regions <- range(gene.gr)
@@ -513,22 +518,25 @@ heatmapGene <- function(data,
                      start= min(start(regions)), 
                      end = max(end(regions)))
     regions <- as(df, "GRanges")
-    
     p <- names(sort(subsetByOverlaps(probes.info,regions,ignore.strand=TRUE)))
     if(length(p) == 0) stop("No probes close to the gene were found")
-    neargenes <- ELMER::GetNearGenes(probes = p,
-                                     data = data,
-                                     numFlankingGenes = 10)
-    pairs <- plyr::ldply(neargenes)
+    print("cg04340430" %in% p)
+    pairs <- ELMER::GetNearGenes(probes = p,
+                                 data = data,
+                                 numFlankingGenes = 10) 
+    print("cg04340430" %in% pairs$ID)
+    save(pairs,file = "pairs_all.rda")
     pairs <- pairs[pairs$Symbol %in% GeneSymbol,]
-    pairs <- addDistNearestTSS(data, pairs)
+    print("cg04340430" %in% pairs$ID)
+    save(pairs,file = "pairs.rda")
+    pairs <- addDistNearestTSS(data, pairs)  %>% na.omit
     p <- rev(names(sort(probes.info[p], ignore.strand=TRUE)))
-    pairs <- pairs[match(p,pairs$Probe),]
+    pairs <- pairs[match(p,pairs$ID),] %>% na.omit
     if(scatter.plot){
-      for(p in pairs$Probe){
+      for(p in pairs$ID){
         scatter.plot(data = mae,
                      byPair = list(probe = p, 
-                                   gene = gene.location$ensembl_gene_id), # TNFRSF11A
+                                   gene = gene.location$ensembl_gene_id), 
                      category = group.col, 
                      dir.out = dir.out, 
                      save = TRUE, 
@@ -547,7 +555,11 @@ heatmapGene <- function(data,
   if(!(missing(group1) & missing(group2))){
     data <- data[,colData(data)[,group.col] %in% c(group1, group2)]
   } 
-  meth <- assay(getMet(data))[pairs$Probe,]
+  strand.factor <- ifelse(as.data.frame(gene.location)$strand == "+",1,-1)
+  pairs$DistanceTSSwithSignal <- pairs$DistanceTSS * ifelse(grepl("R",pairs$Side),1,-1)  * strand.factor
+  
+  meth <- assay(getMet(data))[pairs$ID,]
+  rownames(meth) <- paste0(pairs$ID, " (Dist.TSS ",pairs$DistanceTSSwithSignal,")")
   exp <- assay(getExp(data))[unique(pairs$GeneID),,drop = FALSE]
   
   # Ordering the heatmap
@@ -600,7 +612,7 @@ heatmapGene <- function(data,
       suppressWarnings({
         nb <- as.numeric(colData(data)[,c(i)])
         colData(data)[,c(i)] <- nb
-        if(!all(na.omit(nb) >=0)){
+        if(!all(na.omit(nb) >= 0)){
           col <- circlize::colorRamp2(c(min(nb,na.rm = T),
                                         (max(nb,na.rm = T) + min(nb,na.rm = T))/2,
                                         max(nb,na.rm = T)), c(colors[(l.all+1)],"white", colors[(l.all + 2)]))
@@ -649,7 +661,7 @@ heatmapGene <- function(data,
   if(!is.null(met.metadata)) {
     for(i in met.metadata)
       ht_list <- ht_list + 
-        Heatmap(values(getMet(data)[pairs$Probe,])[i],
+        Heatmap(values(getMet(data)[pairs$ID,])[i],
                 name = i, 
                 width = unit(5, "mm"),
                 column_title = "", 
@@ -659,7 +671,7 @@ heatmapGene <- function(data,
   if(!is.null(exp.metadata)) {
     for(i in exp.metadata)
       ht_list <- ht_list + 
-        Heatmap(values(getExp(data)[pairs$Probe,])[i],
+        Heatmap(values(getExp(data)[pairs$ID,])[i],
                 name = i, 
                 width = unit(5, "mm"),
                 column_title = "", 
@@ -674,11 +686,11 @@ heatmapGene <- function(data,
   padding = unit.c(unit(2, "mm"), grobWidth(textGrob(paste(rep("a",max(nchar(c(group.col,annotation.col)))/1.15), collapse = ""))) - unit(1, "cm"),
                    unit(c(2, 2), "mm"))
   if(grepl("\\.pdf",filename)) {
-    message("Saving as PDF")
+    message("Saving as PDF: ",sprintf("%s/%s",dir.out,filename))
     pdf(sprintf("%s/%s",dir.out,filename), width = width, height = height)
   }
   if(grepl("\\.png",filename)) { 
-    message("Saving as PNG")
+    message("Saving as PNG: ", sprintf("%s/%s",dir.out,filename))
     if(width < 100) width <- 1000
     if(height < 100) height <- 1000
     png(sprintf("%s/%s",dir.out,filename), width = width, height = height)

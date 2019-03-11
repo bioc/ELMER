@@ -917,6 +917,7 @@ calculateEnrichement <- function(foreground,
 #' @param cores A interger which defines the number of cores to be used in parallel 
 #' process. Default is 1: no parallel process.
 #' @param genome Homer genome (hg38, hg19)
+#' @param nstep Number of regions to evaluate in homer, the bigger, more memory it will use at each step.
 #' @description 
 #' To find for each probe the know motif we will use HOMER software (http://homer.salk.edu/homer/).
 #' Homer and genome should be installed before this function is executed
@@ -951,6 +952,7 @@ findMotifRegion <- function(regions,
                             output.filename = "mapped_motifs_regions.txt",
                             region.size = NULL,
                             genome = "hg38",
+                            nstep = 10000,
                             cores = 1){
   
   if(!is(regions, class(GRanges()))) stop("Regions must be a Genomic Ranges object")
@@ -969,7 +971,7 @@ findMotifRegion <- function(regions,
                    scores = c(rep(".", length(regions))),
                    strands = strand(regions))
   n <- nrow(df)
-  step <- ifelse(n > 1000, 1000, n )
+  step <- ifelse(n > nstep, nstep, n)
   
   if(!file.exists(output.filename)){
     pb <- txtProgressBar(max = floor(n/step), style = 3)
@@ -1025,4 +1027,78 @@ findMotifRegion <- function(regions,
     readr::write_tsv(peaks, path = output.filename,col_names = TRUE)
   }
   print("DONE!")
+}
+
+
+#' @title Get MR TF binding regions infered by ELMER 
+#' @description Saves a bed file with the unmethylated probes (+-250bp) regions that was infered
+#' to be bound by a given TF
+#' @param tf TF name
+#' @param results.dir path to the directory with the results 
+#' (i.e. analysis/unsupervised/definition-Primary.solid.Tumor_vs_Solid.Tissue.Normal/hypo/)
+#' @param genome Human genome (hg38, hg19)
+#' @param met.platform DNA Methylation  Array platform (EPIC, 450K)
+#' @importFrom readr read_csv
+#' @importFrom dplyr %>% mutate
+#' @importFrom tidyr unnest 
+#' @examples 
+#' \dontrun{
+#'   getTFBindingSites("HNF1A",
+#'                     results.dir = "analysis/unsupervised/group-Tumor_vs_Normal/hypo/")
+#' }
+#' @export
+getTFBindingSites <- function(tf = NULL, 
+                              results.dir = NULL,
+                              genome = "hg38",
+                              met.platform =  "450K"){
+  
+  if(is.null(tf)) stop("Please set a tf to be searched")
+  
+  tf.file <- dir(path = results.dir,
+                 pattern = "*.significant.TFs.with.motif.summary.csv",
+                 recursive = T,
+                 full.names = T,
+                 all.files = T)
+  if(length(tf.file) == 0) stop("No TF results file found")
+  tf.tab <- readr::read_csv(tf.file,col_types = readr::cols()) %>% na.omit
+  
+  pair.file <- dir(path = results.dir,
+                   pattern = "*.pairs.significant.withmotif.csv",
+                   recursive = T,
+                   full.names = T,
+                   all.files = T)
+  if(length(pair.file) == 0) stop("No pair results file found")
+  pair.tab <- readr::read_csv(pair.file,col_types = readr::cols())
+  
+  
+  # for each enriched motif find the one with the TF in the classification (family of subfamily within the 5%)
+  for(classification in c("family","subfamily")){
+    if(classification == "family"){
+      tf.tab <- tf.tab %>% 
+        mutate(tf.target = strsplit(as.character(potential.TF.family), ";")) %>% 
+        unnest(tf.target) 
+    } else {
+      tf.tab <- tf.tab %>% 
+        mutate(tf.target = strsplit(as.character(potential.TF.subfamily), ";")) %>% 
+        unnest(tf.target) 
+    }
+    
+    if( !tf %in% tf.tab$tf.target) stop("TF not found")
+    motif <- tf.tab %>% filter(tf.target == tf) %>% pull(motif)
+    
+    # For each enriched motif find in each paired probes it appers
+    pair.tab <- pair.tab %>% 
+      mutate(motif.target = strsplit(as.character(enriched_motifs), ";")) %>% 
+      unnest(motif.target) 
+    probes <- pair.tab %>% filter(motif.target %in% motif) %>% pull(Probe) %>% unique
+    
+    # for each probe get region and write bed file
+    metadata <- ELMER:::getInfiniumAnnotation(plat = met.platform,genome = genome)
+    metadata <- metadata[probes,]
+    metadata <- resize(metadata,  width = 500, fix = 'center')
+    file.out <- file.path(results.dir, paste0(tf, "_",classification,".bed"))
+    message("Saving as ", file.out)
+    rtracklayer::export.bed(metadata,con = file.out)
+  }
+  
 }
