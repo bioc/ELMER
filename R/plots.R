@@ -385,8 +385,8 @@ heatmapPairs <- function(data,
                                           labels = c("0", "10bp", "100bp", "1kb", "10kb", "100kb", "1mb","10mb","100mb"))) 
   }
   ht_list <- ht_list +
-    ht_global_opt(heatmap_legend_title_gp = gpar(fontsize = 10, fontface = "bold"), 
-                  heatmap_legend_labels_gp = gpar(fontsize = 10))
+    ht_global_opt(legend_title_gp = gpar(fontsize = 10, fontface = "bold"), 
+                  legend_labels_gp = gpar(fontsize = 10))
   if(is.null(filename)) return(ht_list)
   padding = unit.c(unit(2, "mm"), grobWidth(textGrob(paste(rep("a",max(nchar(c(group.col,annotation.col)))/1.5), collapse = ""))) - unit(1, "cm"),
                    unit(c(2, 2), "mm"))
@@ -793,9 +793,9 @@ createIGVtrack <- function(pairs,
 #' @description 
 #' Create a bigwig for IGV visualization of DNA methylation data (Array)
 #' @param data A matrix
-#' @param filename track.names (".bw")
-#' @param met.platform DNA methyaltion platform to retrieve data from: EPIC or 450K (default)
 #' @param genome Which genome build will be used: hg38 (default) or hg19.
+#' @param met.platform DNA methyaltion platform to retrieve data from: EPIC or 450K (default)
+#' @param track.names Provide a  list of track names (.bw) otherwise the deault is the will be {samples}.bw
 #' @param dir Which directory files will be saved
 #' @importFrom plyr a_ply
 #' @importFrom rtracklayer export.wig
