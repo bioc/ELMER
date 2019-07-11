@@ -614,7 +614,7 @@ get.GRCh <- function(genome = "hg19", genes, as.granges = FALSE) {
         chrom <- c(1:22, "X", "Y")
         gene.location <- getBM(attributes = attributes,
                                filters = c("entrezgene_id"),
-                               values = list(genes), mart = ensembl)i
+                               values = list(genes), mart = ensembl)
 	gene.location <- gene.location[match(genes,gene.location$entrezgene_id),]
         save(gene.location, file = filename)
       } else {
