@@ -580,34 +580,57 @@ getTF <- function(){
 
 #' @importFrom biomaRt getBM useMart listDatasets
 get.GRCh <- function(genome = "hg19", genes, as.granges = FALSE) {
-  tries <- 0L
+ tries <- 0L
   msg <- character()
   while (tries < 3L) {
     gene.location <- tryCatch({
-      host <- ifelse(genome == "hg19",  "grch37.ensembl.org","www.ensembl.org")
+      host <- ifelse(genome == "hg19", "grch37.ensembl.org",
+                     "www.ensembl.org")
+      mirror <- list(NULL, "useast", "uswest", "asia")[[tries + 1]]
+
       ensembl <- tryCatch({
-        useEnsembl("ensembl", dataset = "hsapiens_gene_ensembl", host =  host)
-      },  error = function(e) {
-        useEnsembl("ensembl",
-                   dataset = "hsapiens_gene_ensembl",
-                   mirror = "uswest",
-                   host =  host)
+        message(ifelse(is.null(mirror),
+                       paste0("Accessing ", host, " to get gene information"),
+                       paste0("Accessing ", host," (mirror ", mirror,")")))
+        useEnsembl("ensembl", dataset = "hsapiens_gene_ensembl", host = host, mirror = mirror)
+      }, error = function(e) {
+        message(e)
+        return(NULL)
       })
-      attributes <- c("ensembl_gene_id", "entrezgene","external_gene_name")
-      gene.location <- getBM(attributes = attributes,
-                             filters = c("entrezgene"),
-                             values = list(genes), mart = ensembl)
-      colnames(gene.location) <-  c("ensembl_gene_id", "entrezgene","external_gene_name")
-      gene.location <- gene.location[match(genes,gene.location$entrezgene),]
+
+      attributes <- c("chromosome_name",
+                      "start_position",
+                      "end_position", "strand",
+                      "ensembl_gene_id",
+                      "entrezgene_id",
+                      "external_gene_name")
+
+      db.datasets <- listDatasets(ensembl)
+      description <- db.datasets[db.datasets$dataset == "hsapiens_gene_ensembl",]$description
+      message(paste0("Downloading genome information (try:", tries,") Using: ", description))
+
+      filename <-  paste0(gsub("[[:punct:]]| ", "_",description),".rda")
+      if(!file.exists(filename)) {
+        chrom <- c(1:22, "X", "Y")
+        gene.location <- getBM(attributes = attributes,
+                               filters = c("entrezgene_id"),
+                               values = list(genes), mart = ensembl)i
+	gene.location <- gene.location[match(genes,gene.location$entrezgene_id),]
+        save(gene.location, file = filename)
+      } else {
+        message("Loading from disk")
+        gene.location <- get(load(filename))
+      }
       gene.location
     }, error = function(e) {
       msg <<- conditionMessage(e)
       tries <<- tries + 1L
+      NULL
     })
     if(!is.null(gene.location)) break
   }
   if (tries == 3L) stop("failed to get URL after 3 tries:", "\n  error: ", msg)
-  
+
   if(as.granges) {
     gene.location$strand[gene.location$strand == 1] <- "+"
     gene.location$strand[gene.location$strand == -1] <- "-"
