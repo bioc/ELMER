@@ -754,7 +754,7 @@ createIGVtrack <- function(pairs,
     tss <- getTSS(genome = genome)
     tss <- tibble::as.tibble(tss)
   } else {
-    tss <- TCGAbiolinks::get.GRCh.bioMart(genome = genome,as.granges = TRUE)
+    tss <- get.GRCh(genome = genome,as.granges = TRUE)
     tss <- tibble::as.tibble(promoters(tss,upstream = 0,downstream = 0))
     tss$transcription_start_site <- tss$start
   }
@@ -882,6 +882,10 @@ get.tabs <- function(dir, classification = "family"){
               "tf.or.table" = tf.or.table))
 }    
 
+#' @title summarize MR TF as a binary table with 1 if TF 
+#' was found in the analysis, 0 if not
+#' @param dir Directory with ELMER  results
+#' @param classification Which columns to retrieve family or subfamily 
 #' @importFrom dplyr full_join as_data_frame
 #' @importFrom purrr reduce
 #' @examples 

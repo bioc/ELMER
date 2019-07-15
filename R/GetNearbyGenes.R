@@ -160,7 +160,7 @@ NearGenes <- function (Target = NULL,
 #' Yao, Lijing, et al. "Inferring regulatory element landscapes and transcription 
 #' factor networks from cancer methylomes." Genome biology 16.1 (2015): 1.
 #' @examples
-#' geneAnnot <- getTSS(TSS=list(upstream=0, downstream=0))
+#' geneAnnot <- getTSS(genome = "hg38")
 #' probe <- GenomicRanges::GRanges(seqnames = c("chr1","chr2"), 
 #' range=IRanges::IRanges(start = c(16058489,236417627), end= c(16058489,236417627)), 
 #' name= c("cg18108049","cg17125141"))
@@ -185,7 +185,7 @@ GetNearGenes <- function(data = NULL,
     if("genome" %in% names(metadata(data))){
       genome <- metadata(data)$genome
       tssAnnot <- getTSS(genome = genome)
-      geneAnnot <- TCGAbiolinks::get.GRCh.bioMart(genome = genome,as.granges = TRUE)
+      geneAnnot <- get.GRCh(genome = genome,as.granges = TRUE)
     }
   }
   
@@ -368,7 +368,7 @@ calcDistNearestTSS <- function(links,
 #' @return A data frame of nearby genes and information: genes' IDs, genes' symbols, 
 # distance with target and side to which the gene locate to the target.
 #' @examples
-#' geneAnnot <-  TCGAbiolinks:::get.GRCh.bioMart("hg38",as.granges = TRUE)
+#' geneAnnot <-  ELMER:::get.GRCh("hg38",as.granges = TRUE)
 #' tssAnnot <-  getTSS(genome = "hg38")
 #' probe <- GenomicRanges::GRanges(seqnames = c("chr1","chr2"), 
 #' range=IRanges::IRanges(start = c(16058489,236417627), end= c(16058489,236417627)), 

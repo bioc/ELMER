@@ -54,7 +54,7 @@ test_that("Function uses correctly the permu.dir", {
                         group2 = "Solid Tissue Normal",
                         nearGenes = nearGenes,
                         permu.size = 5,
-                        raw.pvalue =  0.001,
+                        raw.pvalue =  0.1,
                         Pe = 0.2,
                         dir.out="./",
                         permu.dir = "permu_test",
@@ -137,7 +137,7 @@ test_that("Function uses correctly the permu.dir", {
                         label= "hypo")
 })
 
-test_that("Gene expression is calculated", {
+#test_that("Gene expression is calculated", {
   #data <- ELMER:::getdata("elmer.data.example")
   #nearGenes <- GetNearGenes(TRange = getMet(data)[c("cg00329272","cg10097755"),],
   #                          geneAnnot = getExp(data))
@@ -155,7 +155,7 @@ test_that("Gene expression is calculated", {
   #                      label = "hypo")
   #expect_true(any(grepl("log2FC", colnames(Hypo.pair))))
   #expect_true(any(grepl("pvalue", colnames(Hypo.pair))))
-})
+#})
 
 
 test_that("Test calculation of Pe (empirical raw.pvalue) from Raw-pvalue is working", {
