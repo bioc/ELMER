@@ -643,10 +643,9 @@ get.GRCh <- function(genome = "hg19", genes, as.granges = FALSE) {
       filename <-  paste0(gsub("[[:punct:]]| ", "_",description),".rda")
       if(!file.exists(filename)) {
         chrom <- c(1:22, "X", "Y")
-        gene.location <- getBM(attributes = attributes,
-                               filters = c("entrezgene_id"),
-                               values = list(genes), mart = ensembl)
-	gene.location <- gene.location[match(genes,gene.location$entrezgene_id),]
+        gene.location <- getBM(attributes = attributes, mart = ensembl)
+
+	if(!missing(genes)) gene.location <- gene.location[match(genes,gene.location$entrezgene_id),]
         save(gene.location, file = filename)
       } else {
         message("Loading from disk")
