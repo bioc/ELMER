@@ -633,12 +633,14 @@ get.pair <- function(data,
 #'           unmethy = NULL,
 #'           percentage = 0.2,
 #'           rm.probes = NULL,
+#'           correlation = "negative",
 #'           permu.size = 10000,
 #'           permu.dir = NULL,
 #'           cores = 1)
 #' @param data A multiAssayExperiment with DNA methylation and Gene Expression data. See \code{\link{createMAE}} function.
 #' @param geneID A vector lists the genes' ID.
 #' @param rm.probes A vector lists the probes name.
+#' @param correlation Type of correlation to identify. Default is negative: look for hypomethylation and increase target expression.
 #' @param cores A interger which defines number of core to be used in parallel process.
 #'  Default is 1: don't use parallel process.
 #' @param percentage A number ranges from 0 to 1 specifying the percentage of samples of group 1 and group 2
@@ -1248,6 +1250,7 @@ get.enriched.motif <- function(data,
 #' "hyper" which means the probes are hypermethylated in group1;
 #' This argument is used only when mode is supervised nad
 #' it should be the same value from get.diff.meth function.
+#' @param correlation Type of correlation to identify. Default is negative: look for hypomethylation and increase target expression.
 #' @param save.plots Create TF ranking plots ?
 #' @export
 #' @details
@@ -1313,6 +1316,7 @@ get.TFs <- function(data,
                     group1,
                     group2,
                     mode = "unsupervised",
+                    correlation = "negative",
                     diff.dir = NULL,
                     motif.relevant.TFs,
                     minSubgroupFrac = 0.4,
@@ -1432,13 +1436,14 @@ get.TFs <- function(data,
                            Probe = x,
                            Meths = motif.meth[x,],
                            Gene  = gene,
+                           correlation = correlation,
                            unmethy = unmethylated,
                            methy = methylated,
                            Top   = minSubgroupFrac/2,
                            Exps  = exps)},
                        .progress = "time",
                        .parallel = parallel,
-                       .paropts = list(.errorhandling='pass')
+                       .paropts = list(.errorhandling = 'pass')
   )
   # We are going to make a multiple hypothesis correction
   TF.meth.cor <- lapply(TF.meth.cor, function(x){return(p.adjust(x$Raw.p,method = "BH"))})
@@ -1486,7 +1491,7 @@ get.TFs <- function(data,
                        .parallel = parallel,
                        .margins = 1,
                        .id = NULL,
-                       .paropts=list(.errorhandling='pass'))
+                       .paropts = list(.errorhandling = 'pass'))
   rownames(cor.summary) <- cor.summary$motif
   
   if(save){
