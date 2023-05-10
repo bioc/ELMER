@@ -53,11 +53,12 @@ render_report <- function(
   out_file = file.path(getwd(),"report.html"),
   funcivar = FALSE
 ) {
+  
   if(missing(dir.out)) stop("Please, set dir.out value")
   if(missing(mae.file)) stop("Please, set mae.file value")
-  if(missing(group.col)) stop("Please, set mae value")
-  if(missing(group1)) stop("Please, set mae value")
-  if(missing(group2)) stop("Please, set mae value")
+  if(missing(group.col)) stop("Please, set group.col value")
+  if(missing(group1)) stop("Please, set group1 value")
+  if(missing(group2)) stop("Please, set group2 value")
   template <- system.file("rmd", "template.Rmd", package="ELMER")
   
   message("Compiling report")

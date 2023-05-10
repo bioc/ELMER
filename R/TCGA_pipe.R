@@ -84,35 +84,37 @@
 #'    )
 #' }
 TCGA.pipe <- function(
-  disease,
-  genome = "hg38",
-  analysis = "all",
-  wd = getwd(),
-  cores = 1,
-  mode = "unsupervised",
-  Data = NULL, 
-  diff.dir = "hypo",
-  genes = NULL,
-  mutant_variant_classification = c(
-    "Frame_Shift_Del",
-    "Frame_Shift_Ins",
-    "Missense_Mutation",
-    "Nonsense_Mutation",
-    "Splice_Site",
-    "In_Frame_Del",
-    "In_Frame_Ins",
-    "Translation_Start_Site",
-    "Nonstop_Mutation"
-  ),
-  group.col = "TN", 
-  group1 = "Tumor",
-  group2 = "Normal",
-  ...
+    disease,
+    genome = "hg38",
+    analysis = "all",
+    wd = getwd(),
+    cores = 1,
+    mode = "unsupervised",
+    Data = NULL, 
+    diff.dir = "hypo",
+    genes = NULL,
+    mutant_variant_classification = c(
+      "Frame_Shift_Del",
+      "Frame_Shift_Ins",
+      "Missense_Mutation",
+      "Nonsense_Mutation",
+      "Splice_Site",
+      "In_Frame_Del",
+      "In_Frame_Ins",
+      "Translation_Start_Site",
+      "Nonstop_Mutation"
+    ),
+    group.col = "TN", 
+    group1 = "Tumor",
+    group2 = "Normal",
+    ...
 ){
   
   if (missing(disease)) 
-    stop("Disease should be specified.\nDisease short name (such as LAML) 
-         please check https://gdc-portal.nci.nih.gov")
+    stop(
+      "Disease should be specified.\nDisease short name (such as LAML) 
+         please check https://gdc-portal.nci.nih.gov"
+    )
   
   available.analysis <- c(
     "download","distal.probes",
@@ -242,6 +244,7 @@ TCGA.pipe <- function(
       results.path = dir.out
     )
   }  
+  
   # get differential DNA methylation
   if(tolower("diffMeth") %in% tolower(analysis)){
     print.header("Get differential DNA methylation loci")
@@ -256,18 +259,25 @@ TCGA.pipe <- function(
       mae <- args$data
     }
     params <- args[names(args) %in% c("pvalue","sig.dif")]
-    params <- c(params,list(diff.dir = diff.dir, 
-                            dir.out = dir.out, 
-                            cores = cores, 
-                            minSubgroupFrac = minSubgroupFrac))
+    params <- c(
+      params,
+      list(
+        diff.dir = diff.dir, 
+        dir.out = dir.out, 
+        cores = cores, 
+        minSubgroupFrac = minSubgroupFrac
+      )
+    )
     diff.meth <- tryCatch({
       diff.meth <- do.call(
         get.diff.meth,
         c(params,
-          list(data = mae,
-               group.col = group.col, 
-               group1 = group1,
-               group2 = group2)
+          list(
+            data = mae,
+            group.col = group.col, 
+            group1 = group1,
+            group2 = group2
+          )
         )
       )
       diff.meth
@@ -294,8 +304,11 @@ TCGA.pipe <- function(
       mae <- args$data
     }
     
-    Sig.probes <- read_csv(sprintf("%s/getMethdiff.%s.probes.significant.csv",
-                                   dir.out,diff.dir))[,1,drop = T]
+    Sig.probes <- read_csv(
+      sprintf("%s/getMethdiff.%s.probes.significant.csv",
+              dir.out,diff.dir)
+    )[,1,drop = T]
+    
     if(length(Sig.probes) == 0) {
       message("No significant probes were found")
       return(NULL)
@@ -308,10 +321,13 @@ TCGA.pipe <- function(
     if(length(nearGenes.file) == 0){
       nearGenes.file <- sprintf("%s/%s.probes_nearGenes.rda",dir.out,diff.dir)
       params <- args[names(args) %in% c("numFlankingGenes")]
-      nearGenes <- do.call(GetNearGenes,
-                           c(list(data = mae, 
-                                  probes = Sig.probes),
-                             params))
+      nearGenes <- do.call(
+        GetNearGenes,
+        c(
+          list(data = mae, probes = Sig.probes),
+          params
+        )
+      )
       save(nearGenes,file=nearGenes.file)
       message("File saved: ", nearGenes.file)
     } else {
@@ -324,20 +340,23 @@ TCGA.pipe <- function(
     # get pair
     permu.dir <- paste0(dir.out,"/permu")
     params <- args[names(args) %in% c("percentage","permu.size","Pe","raw.pvalue","diffExp","group.col")]
-    SigPair <- do.call(get.pair,
-                       c(list(data      = mae,
-                              nearGenes = nearGenes.file,
-                              permu.dir = permu.dir,
-                              group.col = group.col, 
-                              group1    = group1,
-                              mode      = mode,
-                              diff.dir  = diff.dir,
-                              minSubgroupFrac = min(1,minSubgroupFrac * 2),
-                              group2    = group2,
-                              dir.out   = dir.out,
-                              cores     = cores,
-                              label     = diff.dir),
-                         params))
+    SigPair <- do.call(
+      get.pair,
+      c(
+        list(data      = mae,
+             nearGenes = nearGenes.file,
+             permu.dir = permu.dir,
+             group.col = group.col, 
+             group1    = group1,
+             mode      = mode,
+             diff.dir  = diff.dir,
+             minSubgroupFrac = min(1,minSubgroupFrac * 2),
+             group2    = group2,
+             dir.out   = dir.out,
+             cores     = cores,
+             label     = diff.dir),
+        params)
+    )
     
     # message("==== Promoter analysis ====")
     # message("calculate associations of gene expression with DNA methylation at promoter regions")
@@ -386,9 +405,12 @@ TCGA.pipe <- function(
       message("No significant pair probe genes found")
       return(NULL)
     }
-    write.csv(SigPair, 
-              file = sprintf("%s/getPair.%s.pairs.significant.csv", dir.out, diff.dir),
-              row.names=FALSE)
+    
+    write.csv(
+      SigPair, 
+      file = sprintf("%s/getPair.%s.pairs.significant.csv", dir.out, diff.dir),
+      row.names = FALSE
+    )
     
     if(length(analysis) == 1) return(SigPair)
   }
@@ -410,10 +432,14 @@ TCGA.pipe <- function(
     
     message(sprintf("Identify enriched motif for %smethylated probes",diff.dir))
     if(file.exists(sprintf("%s/getPair.%s.pairs.significant.csv",dir.out, diff.dir))){
-      Sig.probes <- readr::read_csv(sprintf("%s/getPair.%s.pairs.significant.csv", dir.out, diff.dir), 
-                                    col_names = TRUE,
-                                    col_types = c("cccicdd"))
+      Sig.probes <- readr::read_csv(
+        sprintf("%s/getPair.%s.pairs.significant.csv", dir.out, diff.dir), 
+        col_names = TRUE,
+        col_types = c("cccicdd")
+      )
+      
       Sig.probes <- unique(Sig.probes$Probe)
+      
       if(length(unique(Sig.probes)) < 10) {
         message ("No significants pairs were found in the previous step") 
         return(NULL)
@@ -430,16 +456,21 @@ TCGA.pipe <- function(
     if(genome == "hg38") data("Probes.motif.hg38.450K", package = "ELMER.data", envir = newenv)
     probes.motif <- get(ls(newenv)[1],envir=newenv)   
     
-    enriched.motif <- do.call(get.enriched.motif, 
-                              c(list(data         = mae,
-                                     probes.motif = probes.motif,
-                                     probes       = Sig.probes,
-                                     dir.out      = dir.out,
-                                     label        = diff.dir,
-                                     plot.title   = paste0("OR for paired probes ",
-                                                           diff.dir, " methylated in ",
-                                                           group1, " vs ",group2, "(group: ",group.col,")")),
-                                params))
+    enriched.motif <- do.call(
+      get.enriched.motif, 
+      c(
+        list(
+          data         = mae,
+          probes.motif = probes.motif,
+          probes       = Sig.probes,
+          dir.out      = dir.out,
+          label        = diff.dir,
+          plot.title   = paste0("OR for paired probes ",
+                                diff.dir, " methylated in ",
+                                group1, " vs ",group2, "(group: ",group.col,")")),
+        params
+      )
+    )
     
     if(length(analysis) == 1) return(enriched.motif)
   }
@@ -458,9 +489,15 @@ TCGA.pipe <- function(
     } else {
       mae <- args$data
     }
+    
     #construct RNA seq data
-    print.header(sprintf("Identify regulatory TF for enriched motif in %smethylated probes",
-                         diff.dir), "subsection")
+    print.header(
+      sprintf(
+        "Identify regulatory TF for enriched motif in %smethylated probes",
+        diff.dir
+      ),
+      type =  "subsection"
+    )
     enriched.motif <- args[names(args) %in% "enriched.motif"]
     if(length(enriched.motif) == 0){
       enriched.motif <- sprintf("%s/getMotif.%s.enriched.motifs.rda", dir.out, diff.dir)
@@ -468,19 +505,21 @@ TCGA.pipe <- function(
     
     params <- args[names(args) %in% c("TFs", "motif.relavent.TFs","percentage")]
     TFs <- do.call(get.TFs, 
-                   c(list(
-                     data           = mae, 
-                     group.col      = group.col, 
-                     group1         = group1,
-                     group2         = group2,
-                     mode      = mode,
-                     diff.dir  = diff.dir,
-                     minSubgroupFrac =  min(1,minSubgroupFrac * 2),
-                     enriched.motif = enriched.motif,
-                     dir.out        = dir.out, 
-                     cores          = cores, 
-                     label          = diff.dir),
-                     params))
+                   c(
+                     list(
+                       data           = mae, 
+                       group.col      = group.col, 
+                       group1         = group1,
+                       group2         = group2,
+                       mode           = mode,
+                       diff.dir       = diff.dir,
+                       minSubgroupFrac =  min(1,minSubgroupFrac * 2),
+                       enriched.motif = enriched.motif,
+                       dir.out        = dir.out, 
+                       cores          = cores, 
+                       label          = diff.dir),
+                     params)
+    )
     if(length(analysis) == 1) return(TFs)
   }
   
@@ -499,7 +538,7 @@ TCGA.pipe <- function(
       mode = mode, 
       title = paste0(disease, " report"),
       minSubgroupFrac = ifelse(mode =="supervised",1,0.2),
-      mae = mae.path,
+      mae.file = mae.path,
       direction = direction,
       group.col = group.col, 
       group1 = group1, 
@@ -522,20 +561,20 @@ TCGA.pipe <- function(
 #'  data <- ELMER:::addMutCol(data, "LUSC","TP53")
 #' }
 addMutCol <- function(
-  data, 
-  disease, 
-  genes, 
-  mutant_variant_classification = c(
-    "Frame_Shift_Del",
-    "Frame_Shift_Ins",
-    "Missense_Mutation",
-    "Nonsense_Mutation",
-    "Splice_Site",
-    "In_Frame_Del",
-    "In_Frame_Ins",
-    "Translation_Start_Site",
-    "Nonstop_Mutation"
-  )
+    data, 
+    disease, 
+    genes, 
+    mutant_variant_classification = c(
+      "Frame_Shift_Del",
+      "Frame_Shift_Ins",
+      "Missense_Mutation",
+      "Nonsense_Mutation",
+      "Splice_Site",
+      "In_Frame_Del",
+      "In_Frame_Ins",
+      "Translation_Start_Site",
+      "Nonstop_Mutation"
+    )
 ){
   maf <- TCGAbiolinks::GDCquery_Maf(disease, pipeline = "mutect2")
   for(gene in genes) {
