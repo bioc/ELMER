@@ -17,7 +17,7 @@ getTCGA(disease, Meth=TRUE, RNA=TRUE, Clinic=TRUE, basedir="./Data", genome = "h
 
 \item{basedir}{A path shows where the data will be stored.}
 
-\item{genome}{Data aligned against which genome of reference. Options: "hg19", "hg38" (default)}
+\item{genome}{Data aligned against which genome of reference. Options: "hg38" (default)}
 }
 \value{
 Download DNA methylation (HM450K)/RNAseq(HiseqV2)/Clinic data for
@@ -35,6 +35,6 @@ getTCGA(
    RNA = FALSE, 
    Clinic = TRUE, 
    basedir = tempdir(), 
-   genome = "hg19"
+   genome = "hg38"
 )
 }

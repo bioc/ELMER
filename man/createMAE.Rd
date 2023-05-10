@@ -155,27 +155,9 @@ mae <- createMAE(
    GDCdownload(query.exp)
    exp.hg38 <- GDCprepare(query = query.exp)
    
-   # Aligned against Hg19
-   query.exp.hg19 <- GDCquery(
-       project = "TCGA-HNSC", 
-       data.category = "Gene expression",
-       data.type = "Gene expression quantification",
-       platform = "Illumina HiSeq", 
-       file.type  = "normalized_results",
-       experimental.strategy = "RNA-Seq",
-       barcode = samples,
-       legacy = TRUE
-   )
-   GDCdownload(query.exp.hg19)
-   exp.hg19 <- GDCprepare(query.exp.hg19)
-   
-   # Our object needs to have emsembl gene id as rownames
-   rownames(exp.hg19) <- values(exp.hg19)$ensembl_gene_id
-   
    # DNA Methylation
    query.met <- GDCquery(
       project = "TCGA-HNSC",
-      legacy = FALSE,
       data.category = "DNA Methylation", 
       data.type = "Methylation Beta Value",
       barcode = samples,
@@ -185,17 +167,11 @@ mae <- createMAE(
    GDCdownload(query.met)
    met <- GDCprepare(query = query.met)
    
-   distal.enhancer <- get.feature.probe(genome = "hg19",met.platform = "450k")
+   distal.enhancer <- get.feature.probe(
+      genome = "hg19",
+      met.platform = "450k"
+   )
    
-   # Consisering it is TCGA and SE
-   mae.hg19 <- createMAE(
-      exp = exp.hg19, 
-      met =  met, 
-      TCGA = TRUE, 
-      genome = "hg19",  
-      filter.probes = distal.enhancer
-     )
-   values(getExp(mae.hg19))
    
    mae.hg38 <- createMAE(
      exp = exp.hg38, met = met, 
@@ -212,8 +188,10 @@ mae <- createMAE(
    )
    
    mae.hg38 <- createMAE(
-     exp = assay(exp.hg38), met = assay(met), 
-     TCGA = TRUE, genome = "hg38",  
+     exp = assay(exp.hg38), 
+     met = assay(met), 
+     TCGA = TRUE, 
+     genome = "hg38",  
      filter.probes = distal.enhancer
    )
    values(getExp(mae.hg38))
@@ -225,17 +203,22 @@ mae <- createMAE(
    not.tcga.met <- met 
    colnames(not.tcga.met) <- substr(colnames(not.tcga.met),1,15)
    
-   phenotype.data <- data.frame(row.names = colnames(not.tcga.exp),
-                                primary = colnames(not.tcga.exp),
-                                samples = colnames(not.tcga.exp), 
-                                group = c(rep("group1",4),rep("group2",4)))
+   phenotype.data <- data.frame(
+      row.names = colnames(not.tcga.exp),
+      primary = colnames(not.tcga.exp),
+      samples = colnames(not.tcga.exp), 
+      group = c(rep("group1",4),rep("group2",4))
+   )
+   
    distal.enhancer <- get.feature.probe(genome = "hg19",met.platform = "450k")
-   mae.hg19 <- createMAE(exp = not.tcga.exp, 
-                         met =  not.tcga.met, 
-                         TCGA = FALSE, 
-                         filter.probes = distal.enhancer,
-                         genome = "hg19", 
-                         colData = phenotype.data)
+   mae.hg19 <- createMAE(
+      exp = not.tcga.exp, 
+      met =  not.tcga.met, 
+      TCGA = FALSE, 
+      filter.probes = distal.enhancer,
+      genome = "hg19", 
+      colData = phenotype.data
+   )
 }
 createMAE
 }

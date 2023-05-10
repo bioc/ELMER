@@ -7,7 +7,7 @@
 #' @param Meth A logic if TRUE HM450K DNA methylation data will download.
 #' @param RNA A logic if TRUE RNA-seq Hiseq-V2 from TCGA level 3 will be download.
 #' @param Clinic A logic if TRUE clinic data will be download for that disease.
-#' @param genome Data aligned against which genome of reference. Options: "hg19", "hg38" (default)
+#' @param genome Data aligned against which genome of reference. Options: "hg38" (default)
 #' @param basedir A path shows where the data will be stored.
 #' @return Download DNA methylation (HM450K)/RNAseq(HiseqV2)/Clinic data for
 #' the specified disease from TCGA.
@@ -20,15 +20,15 @@
 #'    RNA = FALSE, 
 #'    Clinic = TRUE, 
 #'    basedir = tempdir(), 
-#'    genome = "hg19"
+#'    genome = "hg38"
 #')
 getTCGA <- function(
-  disease,
-  Meth = TRUE,
-  RNA = TRUE,
-  Clinic = TRUE,
-  basedir = "./Data",
-  genome = "hg38"
+    disease,
+    Meth = TRUE,
+    RNA = TRUE,
+    Clinic = TRUE,
+    basedir = "./Data",
+    genome = "hg38"
 ){
   
   if(missing(disease)) stop("disease need to be specified.")
@@ -62,34 +62,41 @@ getTCGA <- function(
   
   if(Meth && test.meth == "error") 
     warning(
-      sprintf("Failed to download DNA methylation data. Possible possibility: 
+      sprintf(
+        "Failed to download DNA methylation data. Possible possibility: 
               1. No 450K DNA methylation data for %s patients; 
-              2. Download error.",disease))
+              2. Download error.",disease)
+    )
   if(RNA && test.rna == "error") 
     warning(
-      sprintf("Failed to download RNA-seq data. Possible possibility: 
+      sprintf(
+        "Failed to download RNA-seq data. Possible possibility: 
                1. No RNA-seq data for %s patients; 
-               2. Download error.",disease))
+               2. Download error.",disease)
+    )
   if(Clinic && test.clinic == "error") 
     warning(
-      sprintf("Failed to download clinic data. Possible possibility:
+      sprintf(
+        "Failed to download clinic data. Possible possibility:
                1. No clinical data for %s patients; 
-               2. Download error.", disease))
+               2. Download error.", disease)
+    )
 }
 
 #' getRNAseq to download all RNAseq data for a certain cancer type from TCGA.
 #' @description getRNAseq is a function to download RNAseq data for all samples of a certain cancer type from TCGA
 #' @param disease A character specifies disease in TCGA such as BLCA
 #' @param basedir Download all RNA seq level 3 data for the specified disease.
-#' @param genome Data aligned against which genome of reference. Options: "hg19", "hg38" (default)
+#' @param genome Data aligned against which genome of reference. Options: "hg38" (default)
 #' @usage getRNAseq(disease, basedir = "./Data", genome = "hg38")
 #' @return Download all RNA seq level 3 data for the specified disease.
 #' @importFrom TCGAbiolinks GDCdownload GDCquery GDCprepare
 getRNAseq <- function(
-  disease, 
-  basedir="./Data",
-  genome = "hg38"
+    disease, 
+    basedir="./Data",
+    genome = "hg38"
 ) {
+  genome <- match.arg(genome,c("hg38"))
   disease <- tolower(disease)
   diseasedir <- file.path(basedir, toupper(disease))
   dir.raw <- file.path(diseasedir,"Raw")
@@ -99,26 +106,14 @@ getRNAseq <- function(
   fout <- sprintf("%s/%s_RNA_%s.rda",diseasedir,toupper(disease), genome)
   if(!file.exists(fout)){
     
-    if (genome == "hg38"){
-      message("Downloading STAR - Counts (hg38)")
-      query <- GDCquery(
-        project = paste0("TCGA-",toupper(disease)), 
-        data.category = "Transcriptome Profiling", 
-        data.type = "Gene Expression Quantification", 
-        workflow.type = "STAR - Counts"
-      )
-    } else {
-      message("Downloading RSEM - normalized results data (hg19)")
-      query <- GDCquery(
-        project = paste0("TCGA-",toupper(disease)),
-        data.category = "Gene expression",
-        data.type = "Gene expression quantification",
-        platform = "Illumina HiSeq", 
-        file.type  = "normalized_results",
-        experimental.strategy = "RNA-Seq",
-        legacy = TRUE
-      )
-    }
+    message("Downloading STAR - Counts (hg38)")
+    query <- GDCquery(
+      project = paste0("TCGA-",toupper(disease)), 
+      data.category = "Transcriptome Profiling", 
+      data.type = "Gene Expression Quantification", 
+      workflow.type = "STAR - Counts"
+    )
+    
     tryCatch({
       GDCdownload(query, directory = dir.rna, files.per.chunk =  200)
     }, error = function(e) {
@@ -133,11 +128,10 @@ getRNAseq <- function(
       remove.files.prepared = FALSE,
       summarizedExperiment = TRUE
     )
-    if(genome == "hg19"){
-      rownames(rna) <- values(rna)$ensembl_gene_id
-    }
+    
     message(paste0("Saving Gene Expression to: ", fout))
-    save(rna,file=fout)
+    save(rna,file = fout)
+    
   } else {
     message(paste("Gene Expression object already exists:", fout))
   }
@@ -152,18 +146,19 @@ getRNAseq <- function(
 #' @param basedir A path. Shows where the data will be stored.
 #' @param filter For each probe, the percentage of NA among the all the samples
 #'  should smaller than filter.
-#' @param genome Data aligned against which genome of reference. Options: "hg19", "hg38" (default)
+#' @param genome Data aligned against which genome of reference. Options:  "hg38" (default)
 #' @return Download all DNA methylation from HM450K level 3 data for
 #'  the specified disease.
 #' @importFrom TCGAbiolinks GDCquery GDCdownload GDCprepare
 #' @usage get450K(disease, basedir="./Data",filter=0.2, genome = "hg38")
 get450K <- function(
-  disease, 
-  basedir = "./Data",
-  filter  = 0.2,
-  genome  = "hg38"
+    disease, 
+    basedir = "./Data",
+    filter  = 0.2,
+    genome  = "hg38"
 ){
   
+  genome <- match.arg(genome,c("hg38"))
   disease <- tolower(disease)
   diseasedir <- file.path(basedir, toupper(disease))
   dir.raw <- file.path(diseasedir,"Raw")
@@ -173,26 +168,19 @@ get450K <- function(
   fout <- sprintf("%s/%s_meth_%s.rda",diseasedir,toupper(disease),genome)
   if(!file.exists(fout)){
     
-    if (genome == "hg38") {
-      query <- GDCquery(
-        project = paste0("TCGA-",toupper(disease)), 
-        data.category = "DNA Methylation",
-        data.type = "Methylation Beta Value",
-        platform = "Illumina Human Methylation 450"
-      )
-    } else {
-      query <- GDCquery(
-        project = paste0("TCGA-",toupper(disease)), 
-        data.category = "DNA methylation",
-        legacy = TRUE,
-        platform = "Illumina Human Methylation 450"
-      )
-    }  
+    query <- GDCquery(
+      project = paste0("TCGA-",toupper(disease)), 
+      data.category = "DNA Methylation",
+      data.type = "Methylation Beta Value",
+      platform = "Illumina Human Methylation 450"
+    )
+    
     tryCatch({
       GDCdownload(query,directory = dir.meth, files.per.chunk = 5)
     }, error = function(e) {
       GDCdownload(query,directory = dir.meth,  method = "client")
     })
+    
     message("Preparing data")
     met <- GDCprepare(
       query = query,
@@ -221,8 +209,8 @@ get450K <- function(
 #' @importFrom TCGAbiolinks GDCquery_clinic
 #' @return Download all clinic information for the specified disease.
 getClinic <- function(
-  disease, 
-  basedir="./Data"
+    disease, 
+    basedir="./Data"
 ) {
   disease <- tolower(disease)
   diseasedir <- file.path(basedir, toupper(disease))
