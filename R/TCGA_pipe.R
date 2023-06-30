@@ -576,7 +576,16 @@ addMutCol <- function(
       "Nonstop_Mutation"
     )
 ){
-  maf <- TCGAbiolinks::GDCquery_Maf(disease, pipeline = "mutect2")
+  query <- GDCquery(
+    project = paste0("TCGA-",disease), 
+    data.category = "Simple Nucleotide Variation", 
+    access = "open",
+    data.type = "Masked Somatic Mutation", 
+    workflow.type = "Aliquot Ensemble Somatic Variant Merging and Masking"
+  )
+  GDCdownload(query)
+  maf <- GDCprepare(query)
+  
   for(gene in genes) {
     if(gene %in% maf$Hugo_Symbol) {
       message("Adding information for gene: ", gene)
@@ -584,10 +593,11 @@ addMutCol <- function(
       idx <- unique(unlist(sapply(mutant_variant_classification,function(x) grep(x,aux$Variant_Classification, ignore.case = TRUE))))
       aux <- aux[idx,]
       mutant.samples <- substr(aux$Tumor_Sample_Barcode,1,16)
-      colData(data)[,gene] <- "Normal"
+      colData(data)[[gene]] <- "Normal"
       colData(data)[colData(data)$TN == "Tumor", gene] <- "WT"
-      colData(data)[colData(data)$TN == "Tumor" & 
-                      colData(data)$sample %in% mutant.samples,gene] <- "Mutant"
+      colData(data)[
+        colData(data)$TN == "Tumor" & colData(data)$sample %in% mutant.samples,gene
+      ] <- "Mutant"
       message("The column ", gene, " was create in the MAE object")
       print(plyr::count(colData(data)[,gene]))
     } else {
