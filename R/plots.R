@@ -1157,6 +1157,7 @@ get.tab.pval <- function(dir,classification,tab, top = TRUE){
 
 
 #' @importFrom DelayedArray rowMins
+#' @importFrom utils head tail
 get.top.tf.by.pval <- function(tab.pval,top = 5){
   labels <- c()
   for(i in 1:ncol(tab.pval)){

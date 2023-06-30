@@ -77,6 +77,7 @@ Stat.diff.meth <- function(
 #' @param methy Index of M (methylated) group.
 #' @param unmethy Index of U (unmethylated) group.
 #' @return U test results
+#' @importFrom utils head tail
 Stat.nonpara.permu <- function(
     Probe,
     Gene,
@@ -136,16 +137,20 @@ Stat.nonpara.permu <- function(
 #' @param methy Index of M (methylated) group.
 #' @param unmethy Index of U (unmethylated) group.
 #' @importFrom stats wilcox.test
+#' @importFrom utils head tail
 #' @return U test results
-Stat.nonpara <- function(Probe,
-                         NearGenes,
-                         Top = NULL,
-                         correlation = "negative",
-                         unmethy = NULL,
-                         methy  = NULL,
-                         Meths = Meths,
-                         Exps = Exps){
-  if(!length(Probe)==1) stop("Number of  Probe should be 1")
+Stat.nonpara <- function(
+    Probe,
+    NearGenes,
+    Top = NULL,
+    correlation = "negative",
+    unmethy = NULL,
+    methy  = NULL,
+    Meths = Meths,
+    Exps = Exps
+){
+  
+  if(!length(Probe) == 1) stop("Number of  Probe should be 1")
   
   NearGenes.set <- NearGenes[NearGenes$ID == Probe,]
   Gene <- NearGenes.set[,2]
@@ -158,17 +163,23 @@ Stat.nonpara <- function(Probe,
     methy <- tail(idx, n = nb) 
   } 
   # Here we will test if the Expression of the unmethylated group is higher than the exptression of the methylated group
-  test.p <- unlist(lapply(splitmatrix(Exp),
-                          function(x) {
-                            tryCatch({
-                              wilcox.test(x[unmethy],
-                                          x[methy],
-                                          alternative = ifelse(correlation == "negative","greater","less"),
-                                          exact = FALSE)$p.value},
-                              error = function(x){
-                                NA
-                              })
-                          }))
+  test.p <- unlist(
+    lapply(
+      splitmatrix(Exp),
+      function(x) {
+        tryCatch({
+          wilcox.test(
+            x[unmethy],
+            x[methy],
+            alternative = ifelse(correlation == "negative","greater","less"),
+            exact = FALSE
+          )$p.value},
+          error = function(x){
+            NA
+          })
+      }
+    )
+  )
   
   if(length(Gene)==1){
     Raw.p <- test.p
@@ -179,13 +190,15 @@ Stat.nonpara <- function(Probe,
   # In case Symbol is not in the input file
   if(!"Symbol" %in% colnames(NearGenes.set)) NearGenes.set$Symbol <- NA
   
-  out <- data.frame(Probe    = rep(Probe,length(Gene)),
-                    GeneID   = Gene,
-                    Symbol   = NearGenes.set$Symbol, 
-                    Distance = NearGenes.set$Distance, 
-                    Sides    = NearGenes.set$Side,
-                    Raw.p    = Raw.p, 
-                    stringsAsFactors = FALSE)
+  out <- data.frame(
+    Probe    = rep(Probe,length(Gene)),
+    GeneID   = Gene,
+    Symbol   = NearGenes.set$Symbol, 
+    Distance = NearGenes.set$Distance, 
+    Sides    = NearGenes.set$Side,
+    Raw.p    = Raw.p, 
+    stringsAsFactors = FALSE
+  )
   
   return(out)
 }
