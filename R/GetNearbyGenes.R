@@ -165,38 +165,43 @@ NearGenes <- function (Target = NULL,
 #' name= c("cg18108049","cg17125141"))
 #' names(probe) <- c("cg18108049","cg17125141")
 #' NearbyGenes <- GetNearGenes(numFlankingGenes = 20,geneAnnot=geneAnnot,TRange=probe)
-GetNearGenes <- function(data = NULL,
-                         probes = NULL,
-                         geneAnnot = NULL,
-                         TRange = NULL,
-                         numFlankingGenes = 20){
+GetNearGenes <- function(
+    data = NULL,
+    probes = NULL,
+    geneAnnot = NULL,
+    TRange = NULL,
+    numFlankingGenes = 20
+){
   message("Searching for the ", numFlankingGenes, " near genes")
-  if(!is.null(data)){
+  
+  if (!is.null(data)) {
     if(is.null(probes)) stop("Please set the probes argument (names of probes to select nearby genes)")
     TRange <- subset(getMet(data), rownames(getMet(data)) %in% probes)
     geneAnnot <- getExp(data)
   }    
-  if(is.null(TRange)){
+  
+  if (is.null(TRange)) {
     stop("TRange must be defined")
   }
   tssAnnot <- NULL
-  if(is.null(geneAnnot)){
-    if("genome" %in% names(metadata(data))){
+  if (is.null(geneAnnot)) {
+    if ("genome" %in% names(metadata(data))) {
       genome <- metadata(data)$genome
       tssAnnot <- getTSS(genome = genome)
       geneAnnot <- get.GRCh(genome = genome,as.granges = TRUE)
     }
   }
   
-  if(class(TRange) == class(as(SummarizedExperiment(),"RangedSummarizedExperiment"))){
+  if (class(TRange) == class(as(SummarizedExperiment(),"RangedSummarizedExperiment"))){
     TRange <- rowRanges(TRange)
   }
-  if(class(geneAnnot) == class(as(SummarizedExperiment(),"RangedSummarizedExperiment"))){
+  
+  if (class(geneAnnot) == class(as(SummarizedExperiment(),"RangedSummarizedExperiment"))){
     geneAnnot <- rowRanges(geneAnnot)
   }
   
-  if(is.null(names(TRange))) {
-    if(is.null(TRange$name)) stop("No probe names found in TRange")
+  if (is.null(names(TRange))) {
+    if (is.null(TRange$name)) stop("No probe names found in TRange")
     names(TRange) <- TRange$name
   }
   
@@ -230,11 +235,11 @@ GetNearGenes <- function(data = NULL,
 #'  NearbyGenes <- addDistNearestTSS(data = data, NearGenes = NearbyGenes)
 #' }
 addDistNearestTSS <- function(
-  data,
-  NearGenes,
-  genome,
-  met.platform,
-  cores = 1
+    data,
+    NearGenes,
+    genome,
+    met.platform,
+    cores = 1
 ) {
   
   if(missing(NearGenes)) stop("Please set NearGenes argument")
@@ -305,9 +310,9 @@ addDistNearestTSS <- function(
 #' }
 #' @author Tiago C. Silva
 calcDistNearestTSS <- function(
-  links,
-  TRange,
-  tssAnnot
+    links,
+    TRange,
+    tssAnnot
 ){
   
   message("calculating Distance to nearest TSS")

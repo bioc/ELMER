@@ -317,7 +317,7 @@ createMAE <- function (
     
     message("Creating MultiAssayExperiment")
     mae <- MultiAssayExperiment(
-      experiments=list("DNA methylation" = met,"Gene expression" = exp),
+      experiments = list("DNA methylation" = met,"Gene expression" = exp),
       colData = colData,   
       sampleMap = sampleMap,
       metadata = list(TCGA= TRUE, genome = genome, met.platform = met.platform )
@@ -956,7 +956,7 @@ getRandomPairs <- function(pairs,
                                      },.progress = "time", .parallel = parallel)
     
     not.matched <- not.matched[grep("NULL",near.genes.linked)]
-    if(length(not.matched) > 0){
+    if (length(not.matched) > 0) {
       aux <- pairs %>% filter(pairs$Probe == unique(pairs$Probe)[not.matched[1]]) %>% pull('Sides') 
       numFlankingGenes <- max(as.numeric(gsub("L|R","",aux))) * 2
     }

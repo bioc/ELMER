@@ -91,18 +91,18 @@
 #'                   statehub.tracks = "hg38/ENCODE/mcf-7.16mark.segmentation.bed")
 #' }
 schematic.plot <- function(
-  data,
-  group.col = NULL,
-  group1 = NULL,
-  group2 = NULL,
-  pair,
-  byProbe,
-  byGeneID,
-  byCoordinate=list(chr=c(), start=c(), end=c()),
-  statehub.tracks = NULL,
-  dir.out="./",
-  save = TRUE,
-  ...
+    data,
+    group.col = NULL,
+    group1 = NULL,
+    group2 = NULL,
+    pair,
+    byProbe,
+    byGeneID,
+    byCoordinate=list(chr=c(), start=c(), end=c()),
+    statehub.tracks = NULL,
+    dir.out="./",
+    save = TRUE,
+    ...
 ){
   # Begin of new schematic plot
   # For a probe get nearby genes
@@ -218,21 +218,21 @@ schematic.plot <- function(
 
 #' @importFrom grDevices rainbow pdf dev.off
 #' @importFrom GenomicRanges seqnames
-#' @importFrom MultiAssayExperiment metadata
+#' @importFrom S4Vectors metadata
 #' @importFrom Gviz IdeogramTrack
 #' @importFrom lattice bwplot
 schematic <- function(
-  data,
-  gene.gr,
-  probe.gr,
-  significant,
-  label,
-  save=TRUE,
-  statehub.tracks = NULL,
-  group.col = NULL,
-  group1 = NULL,
-  group2 = NULL,
-  extra.tracks = NULL
+    data,
+    gene.gr,
+    probe.gr,
+    significant,
+    label,
+    save=TRUE,
+    statehub.tracks = NULL,
+    group.col = NULL,
+    group1 = NULL,
+    group2 = NULL,
+    extra.tracks = NULL
 ){
   options(ucscChromosomeNames = FALSE)
   
@@ -247,11 +247,13 @@ schematic <- function(
   for(i in seq_len(length(unique(significant$Probe)))) {
     fill[values(gene.gr)$ensembl_gene_id %in% significant[significant$Probe %in% unique(significant$Probe)[i],]$GeneID] <- "red"
   }
-  genetrack <- GeneRegionTrack(gene.gr, 
-                               name = "Gene",
-                               fill = fill,
-                               symbol = values(gene.gr)$external_gene_name,
-                               shape = "arrow")
+  genetrack <- GeneRegionTrack(
+    gene.gr, 
+    name = "Gene",
+    fill = fill,
+    symbol = values(gene.gr)$external_gene_name,
+    shape = "arrow"
+  )
   
   wrap_strings <- function(vector_of_strings,width){
     as.character(
