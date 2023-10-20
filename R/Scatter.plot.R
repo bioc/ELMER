@@ -59,22 +59,24 @@
 #' # b. generate one probe-gene pair
 #' scatter.plot(data,byPair=list(probe=c("cg19403323"),gene=c("ENSG00000143322")),
 #'              category="definition", save=FALSE,lm_line=TRUE) 
-scatter.plot <- function(data,
-                         byPair = list(probe = c(),
-                                       gene = c()),
-                         byProbe = list(probe = c(),
-                                        numFlankingGenes = 20),
-                         byTF = list(TF = c(),
-                                     probe = c()), 
-                         category = NULL, 
-                         ylim = NULL,
-                         dots.size = 0.9,
-                         correlation = FALSE,
-                         width = 7,
-                         height = 6,
-                         dir.out = "./", 
-                         save = TRUE, 
-                         ...){
+scatter.plot <- function(
+    data,
+    byPair = list(probe = c(),
+                  gene = c()),
+    byProbe = list(probe = c(),
+                   numFlankingGenes = 20),
+    byTF = list(TF = c(),
+                probe = c()), 
+    category = NULL, 
+    ylim = NULL,
+    dots.size = 0.9,
+    correlation = FALSE,
+    width = 7,
+    height = 6,
+    dir.out = "./", 
+    save = TRUE, 
+    ...
+){
   
   dir.create(dir.out,recursive = TRUE,showWarnings = FALSE)
   
@@ -112,33 +114,39 @@ scatter.plot <- function(data,
       probe <- byPair$probe[i]
       gene <- byPair$gene[i]
       symbol <- getSymbol(data,geneID = gene)
-      P <- scatter(meth     = assay(getMet(data)[probe,]),
-                   exp      = assay(getExp(data)[gene,] ),
-                   category = category, 
-                   ylim     = ylim,
-                   dots.size = dots.size,
-                   legend.title = legend.title,
-                   correlation = correlation,
-                   xlab     = sprintf("DNA methylation at %s",probe), 
-                   ylab     = sprintf("%s gene expression",symbol), 
-                   title    = sprintf("%s_%s",probe,symbol),
-                   ...)
+      P <- scatter(
+        meth     = assay(getMet(data)[probe,]),
+        exp      = assay(getExp(data)[gene,] ),
+        category = category, 
+        ylim     = ylim,
+        dots.size = dots.size,
+        legend.title = legend.title,
+        correlation = correlation,
+        xlab     = sprintf("DNA methylation at %s",probe), 
+        ylab     = sprintf("%s gene expression",symbol), 
+        title    = sprintf("%s_%s",probe,symbol),
+        ...
+      )
       if(save) {
         filename <- sprintf("%s/%s_%s_bypair.pdf", dir.out, probe, symbol)
-        ggsave(filename = filename,
-               plot = P,
-               useDingbats = FALSE, 
-               width = width, 
-               height = height)
+        ggsave(
+          filename = filename,
+          plot = P,
+          useDingbats = FALSE, 
+          width = width, 
+          height = height
+        )
       }
     }
     close(pb)  
     
   }
   if(length(byProbe$probe) != 0){
-    nearGenes <- GetNearGenes(data    = data,
-                              probes  = byProbe$probe,
-                              numFlankingGenes = byProbe$numFlankingGenes)
+    nearGenes <- GetNearGenes(
+      data    = data,
+      probes  = byProbe$probe,
+      numFlankingGenes = byProbe$numFlankingGenes
+    )
     for(i in byProbe$probe){
       probe <- i
       gene <- nearGenes %>% filter(nearGenes$ID == i) %>% pull('GeneID')
@@ -146,21 +154,27 @@ scatter.plot <- function(data,
       exp <- assay(getExp(data)[gene,])
       meth <- assay(getMet(data)[byProbe$probe,])
       rownames(exp) <- symbol
-      P <- scatter(meth     = meth, 
-                   exp      = exp,
-                   ylim     = ylim,
-                   category = category,
-                   dots.size = dots.size,
-                   legend.title = legend.title,
-                   xlab     = sprintf("DNA methylation at %s", probe), 
-                   ylab     = sprintf("Gene expression"), 
-                   title    = sprintf("%s nearby %s genes", probe, byProbe$numFlankingGenes),
-                   ...)
-      if(save) ggsave(filename = sprintf("%s/%s_byprobe.pdf", dir.out, probe),
-                      plot = P, 
-                      useDingbats = FALSE, 
-                      width = width, 
-                      height = height)
+      P <- scatter(
+        meth     = meth, 
+        exp      = exp,
+        ylim     = ylim,
+        category = category,
+        dots.size = dots.size,
+        legend.title = legend.title,
+        xlab     = sprintf("DNA methylation at %s", probe), 
+        ylab     = sprintf("Gene expression"), 
+        title    = sprintf("%s nearby %s genes", probe, byProbe$numFlankingGenes),
+        ...
+      )
+      if(save) {
+        ggsave(
+          filename = sprintf("%s/%s_byprobe.pdf", dir.out, probe),
+          plot = P, 
+          useDingbats = FALSE, 
+          width = width, 
+          height = height
+        )
+      }
     }
   }
   
@@ -187,23 +201,28 @@ scatter.plot <- function(data,
       }
     }
     
-    P <- scatter(meth     = meth, 
-                 exp      = exp,
-                 ylim     = ylim,
-                 category = category,
-                 dots.size = dots.size,
-                 correlation = correlation,
-                 legend.title = legend.title,
-                 xlab     = "Avg DNA methylation", 
-                 ylab     = sprintf("TF expression"), 
-                 title    = "TF vs avg DNA methylation",
-                 ...)
+    P <- scatter(
+      meth     = meth, 
+      exp      = exp,
+      ylim     = ylim,
+      category = category,
+      dots.size = dots.size,
+      correlation = correlation,
+      legend.title = legend.title,
+      xlab     = "Avg DNA methylation", 
+      ylab     = sprintf("TF expression"), 
+      title    = "TF vs avg DNA methylation",
+      ...
+    )
     
-    if(save) ggsave(filename = sprintf("%s/%s_byTF.pdf",dir.out,paste(byTF$TF,collapse = "_")),
-                    plot = P,
-                    useDingbats = FALSE, 
-                    width = max(6, 3*(length(byTF$TF) %% 5)), 
-                    height = max(4, 3 * ceiling(length(byTF$TF) / 5)))
+    if(save) {
+      ggsave(filename = sprintf("%s/%s_byTF.pdf",dir.out,paste(byTF$TF,collapse = "_")),
+             plot = P,
+             useDingbats = FALSE, 
+             width = max(6, 3*(length(byTF$TF) %% 5)), 
+             height = max(4, 3 * ceiling(length(byTF$TF) / 5))
+      )
+    }
   }
   return(P)
 }
@@ -229,19 +248,19 @@ scatter.plot <- function(data,
 #'@param lm_line A logic. If it is TRUE, regression line will be added to the graph.
 #'@return A ggplot figure object
 scatter <- function(
-  meth, 
-  exp, 
-  legend.title = "Legend",
-  category = NULL, 
-  xlab = NULL, 
-  ylab = NULL,
-  ylim = NULL,
-  dots.size = 0.9,
-  title = NULL,
-  correlation = FALSE,
-  correlation.text.size = 3,
-  color.value = NULL,
-  lm_line = FALSE
+    meth, 
+    exp, 
+    legend.title = "Legend",
+    category = NULL, 
+    xlab = NULL, 
+    ylab = NULL,
+    ylim = NULL,
+    dots.size = 0.9,
+    title = NULL,
+    correlation = FALSE,
+    correlation.text.size = 3,
+    color.value = NULL,
+    lm_line = FALSE
 ){
   
   if(is.null(category)) category <- rep(1,length(meth))

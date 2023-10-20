@@ -31,7 +31,7 @@ library(BiocStyle)
 ```{r,eval=TRUE, message=FALSE, warning = FALSE, results = "hide"}
 # Load results from previous sections
 mae <- get(load("mae.rda"))
-pair <- read.csv("result/getPair.hypo.pairs.significant.csv")
+pair <- readr::read_csv("result/getPair.hypo.pairs.significant.csv")
 ```
 
 # Schematic plot

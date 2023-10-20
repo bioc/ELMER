@@ -238,7 +238,10 @@ schematic <- function(
   
   chr <- as.character(seqnames(probe.gr))
   
-  idxTrack <- Gviz::IdeogramTrack(genome = metadata(data)$genome, chromosome = chr)
+  idxTrack <- Gviz::IdeogramTrack(
+    genome = metadata(data)$genome, 
+    chromosome = chr
+  )
   axTrack <- GenomeAxisTrack()
   
   # We will find which is the significant pairs of genes
