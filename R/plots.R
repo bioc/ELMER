@@ -934,7 +934,7 @@ createIGVtrack <- function(pairs,
 #' @param dir Which directory files will be saved
 #' @importFrom plyr a_ply
 #' @importFrom rtracklayer export.wig
-#' @importFrom GenomeInfoDb Seqinfo
+#' @importFrom Seqinfo Seqinfo
 #' @export
 #' @author Tiago Chedraoui Silva (tiagochst at gmail.com)
 #' @examples

@@ -601,7 +601,7 @@ lm_eqn = function(df,Dep,Exp){
 #' }
 #' @export
 #' @author Lijing Yao (maintainer: lijingya@usc.edu)
-#' @import GenomeInfoDb
+#' @import Seqinfo
 #' @importFrom GenomicFeatures transcripts
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @importFrom biomaRt useEnsembl
