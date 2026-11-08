@@ -19,7 +19,7 @@ createBigWigDNAmetArray(
 
 \item{met.platform}{DNA methyaltion platform to retrieve data from: EPIC or 450K (default)}
 
-\item{track.names}{Provide a  list of track names (.bw) otherwise the deault is the will be {samples}.bw}
+\item{track.names}{Provide a  list of track names (.bw) otherwise the default will be \{samples\}.bw}
 
 \item{dir}{Which directory files will be saved}
 }

@@ -930,7 +930,7 @@ createIGVtrack <- function(pairs,
 #' @param data A matrix
 #' @param genome Which genome build will be used: hg38 (default) or hg19.
 #' @param met.platform DNA methyaltion platform to retrieve data from: EPIC or 450K (default)
-#' @param track.names Provide a  list of track names (.bw) otherwise the deault is the will be {samples}.bw
+#' @param track.names Provide a  list of track names (.bw) otherwise the default will be \{samples\}.bw
 #' @param dir Which directory files will be saved
 #' @importFrom plyr a_ply
 #' @importFrom rtracklayer export.wig
