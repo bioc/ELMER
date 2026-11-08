@@ -262,8 +262,8 @@ mae <- createMAE(exp = gene.exp,
                  genome = "hg38") 
 # You can also use sample Mapping and Sample information tables from a tsv file
 # You can use the createTSVTemplates function to create the tsv files
-readr::write_tsv(as.data.frame(sampleMap), path = "sampleMap.tsv")
-readr::write_tsv(as.data.frame(sample.info), path = "sample.info.tsv")
+readr::write_tsv(as.data.frame(sampleMap), file = "sampleMap.tsv")
+readr::write_tsv(as.data.frame(sample.info), file = "sample.info.tsv")
 mae <- createMAE(exp = gene.exp, 
                  met = dna.met, 
                  sampleMap = "sampleMap.tsv", 

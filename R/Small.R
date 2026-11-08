@@ -63,8 +63,8 @@
 #'                  
 #' # You can also use sample Mapping and Sample information tables from a tsv file
 #' # You can use the createTSVTemplates function to create the tsv files
-#' readr::write_tsv(as.data.frame(sampleMap), path = "sampleMap.tsv")
-#' readr::write_tsv(as.data.frame(sample.info), path = "sample.info.tsv")
+#' readr::write_tsv(as.data.frame(sampleMap), file = "sampleMap.tsv")
+#' readr::write_tsv(as.data.frame(sample.info), file = "sample.info.tsv")
 #' 
 #' mae <- createMAE(
 #'    exp = gene.exp, 
@@ -539,13 +539,13 @@ createTSVTemplates <- function(met, exp) {
   message("===== Sample mapping example file ======")
   message("Saving example file as elmer_example_sample_mapping.tsv.")
   message("Please, fill primary column correctly")
-  write_tsv(sampleMap,path = "elmer_example_sample_mapping.tsv")
+  write_tsv(sampleMap,file = "elmer_example_sample_mapping.tsv")
   
   colData <- data.frame(primary = paste0("sample",1:ncol(met)), group = rep("To be filled",ncol(met)))
   message("===== Sample information example file ======")
   message("Saving example file as elmer_example_sample_metadata.tsv.")
   message("Please, fill primary column correctly, also you can add new columns as the example group column.")
-  write_tsv(colData,path = "elmer_example_sample_metadata.tsv")
+  write_tsv(colData,file = "elmer_example_sample_metadata.tsv")
 }
 
 # splitmatix 
@@ -1149,7 +1149,7 @@ findMotifRegion <- function(regions,
   close(pb)
   print(paste0("Writing file: ",output.filename))
   if(!is.null(peaks)) {
-    readr::write_tsv(peaks, path = output.filename,col_names = TRUE)
+    readr::write_tsv(peaks, file = output.filename,col_names = TRUE)
   }
   print("DONE!")
 }

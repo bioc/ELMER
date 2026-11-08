@@ -54,7 +54,7 @@ Imports:
     ggrepel,
     lattice, 
     magrittr, 
-    readr, 
+    readr (>= 1.4.0), 
     scales,
     rvest,
     xml2,

@@ -225,7 +225,7 @@ TCGA.pipe <- function(
     message("File saved as: ", file)
     readr::write_tsv(
       x = as.data.frame(colData(mae)), 
-      path = sprintf("%s/%s_samples_info_%s.tsv",dir.out.root,disease,genome)
+      file = sprintf("%s/%s_samples_info_%s.tsv",dir.out.root,disease,genome)
     )
   }
   

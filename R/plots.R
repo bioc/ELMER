@@ -611,7 +611,7 @@ heatmapGene <- function(data,
         corretlation.tab$FDR <- p.adjust(corretlation.tab$p.value, method = "fdr")
         file.name.table <- paste0(dir.out,"spearman_correlation_",GeneSymbol,"_vs_near_probes.tsv")
         message("Saving spearman correlation table as: ", file.name.table)
-        write_tsv(cbind(as.data.frame(pairs)[,c(1:3,6)],corretlation.tab),path = file.name.table)
+        write_tsv(cbind(as.data.frame(pairs)[,c(1:3,6)],corretlation.tab),file = file.name.table)
       } else if(correlation.method  == "pearson"){
         corretlation.tab <- plyr::adply(pairs$ID,1,function(x){
           met <- assay(getMet(data)[x,])
@@ -625,7 +625,7 @@ heatmapGene <- function(data,
         corretlation.tab$FDR <- p.adjust(corretlation.tab$p.value, method = "fdr")
         file.name.table <- paste0(dir.out,"/pearson_correlation_",GeneSymbol,"_vs_near_probes.tsv")
         message("Saving pearson correlation table as: ", file.name.table)
-        write_tsv(cbind(as.data.frame(pairs)[,c(1:3,6)],corretlation.tab),path = file.name.table)
+        write_tsv(cbind(as.data.frame(pairs)[,c(1:3,6)],corretlation.tab),file = file.name.table)
       }
     }
     # Save probe gene scatter plot
@@ -921,7 +921,7 @@ createIGVtrack <- function(pairs,
   header <- paste0('track name="',track.name,'" graphType=junctions')
   unlink(filename,force = TRUE)
   cat(header,file = filename,sep="\n",append = TRUE)
-  readr::write_delim(pairs, path = filename, append = TRUE)
+  readr::write_delim(pairs, file = filename, append = TRUE)
 }
 
 #' @title Create a bigwig file for IGV visualization of DNA methylation data (Array)
