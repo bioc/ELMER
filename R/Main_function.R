@@ -1716,7 +1716,9 @@ getTFtargets <- function(
   if(!missing(mae)){
     if(is.character(mae)) mae <- get(load(mae))
     # add genomic info to pairs
-    metadata <- as.data.frame(rowRanges(getMet(mae)[unique(pairs$Probe),]))
+    probe.ranges <- rowRanges(getMet(mae)[unique(pairs$Probe),])
+    metadata <- as.data.frame(probe.ranges, row.names = names(probe.ranges))
+    metadata$names <- NULL
     colnames(metadata) <- paste0("probe_", colnames(metadata))
     metadata$Probe <- rownames(metadata)
     pairs <- merge(pairs, metadata, by = "Probe")

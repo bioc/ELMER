@@ -914,7 +914,7 @@ getRandomPairs <- function(pairs,
   
   # Get Probe information
   met.info <- getInfiniumAnnotation(plat = met.platform, genome = genome) 
-  probes.ranges <- as.data.frame(met.info)[,1:5]
+  probes.ranges <- as.data.frame(met.info, row.names = names(met.info))[,1:5]
   colnames(probes.ranges) <- paste0("probe_",colnames(probes.ranges))
   
   # Get distal probes not in the pairs
