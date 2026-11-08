@@ -935,6 +935,7 @@ createIGVtrack <- function(pairs,
 #' @importFrom plyr a_ply
 #' @importFrom rtracklayer export.wig
 #' @importFrom Seqinfo Seqinfo
+#' @importFrom GenomeInfoDb keepStandardChromosomes
 #' @export
 #' @author Tiago Chedraoui Silva (tiagochst at gmail.com)
 #' @examples

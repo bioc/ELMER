@@ -37,6 +37,7 @@ Imports:
     utils,
     IRanges,
     Seqinfo,
+    GenomeInfoDb,
     S4Vectors,
     GenomicFeatures,
     TCGAbiolinks (>= 2.23.7),
