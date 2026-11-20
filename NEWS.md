@@ -1,3 +1,18 @@
+ELMER 2.37.3
+==============
+
+Changes:
+* New maintainer: Christopher Smolen. Tiago Chedraoui Silva remains an author.
+* ELMER is no longer deprecated.
+
+ELMER 2.37.2
+==============
+
+Changes:
+* Fixed writing output files with current readr: the write functions now use `file` instead of the removed `path` argument.
+* Probe names are kept when converting probe GRanges to data frames.
+* keepStandardChromosomes() is now imported from GenomeInfoDb.
+
 ELMER 2.11.0
 ==============
 
